@@ -1,4 +1,4 @@
-# CLI Suite for using [OpenShift API for Data Protection](redht.com/oadp)
+# CLI Suite for using [OpenShift API for Data Protection](https://github.com/openshift/oadp-operator)
 
 Use by running 
 ```sh
