@@ -5,7 +5,7 @@ Use by running
 docker run -it ghcr.io/kaovilai/oadp-cli:latest bash
 ```
 
-Extends from https://github.com/kaovilai/openshift-cli by adding support for following commands:
+Extends from https://catalog.redhat.com/software/containers/openshift4/ose-cli by adding support for following commands:
 - git
 - velero
   - via alias to access velero binary on the velero server on the cluster
