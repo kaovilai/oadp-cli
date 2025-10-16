@@ -5,7 +5,7 @@ metadata:
 spec:
   version: ${VERSION}
   homepage: https://github.com/migtools/oadp-cli
-  shortDescription: Manage OpenShift API for Data Protection (OADP) backup and restore operations
+  shortDescription: CLI for OpenShift API for Data Protection (OADP)
   description: |
     kubectl-oadp is a kubectl plugin for managing OpenShift API for Data Protection (OADP) backup and restore operations.
     
@@ -21,12 +21,10 @@ spec:
     - View backup status and logs  
     - Delete backups
     - Support for both cluster-admin and namespace-scoped operations
-    - Integration with kubectl context for namespace detection
   caveats: |
     This plugin requires:
     - OADP operator to be installed in the cluster
     - Appropriate RBAC permissions for the operations you want to perform
-    - For non-admin operations: namespace-scoped permissions in your current kubectl context namespace
   platforms:
   - selector:
       matchLabels:
