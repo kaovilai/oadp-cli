@@ -1,7 +1,7 @@
 apiVersion: krew.googlecontainertools.github.com/v1alpha2
 kind: Plugin
 metadata:
-  name: evict-pod
+  name: kubectl-oadp
 spec:
   version: {{ .TagName }}
   homepage: https://github.com/migtools/oadp-cli
@@ -58,3 +58,9 @@ spec:
     - View backup status and logs  
     - Delete backups
     - Support for both cluster-admin and namespace-scoped operations
+  caveats: |
+    This plugin requires:
+    - OADP operator to be installed in the cluster
+    - Ensure the velero namespace (where the server is running) is correct: Run `kubectl oadp client config set namespace=<namespace>` to set the velero namespace
+    - Appropriate RBAC permissions for the operations you want to perform
+    - Read more documentation at: https://github.com/migtools/oadp-cli
