@@ -387,7 +387,7 @@ release-build: ## Build binaries for all platforms
 		echo "Building for $$GOOS/$$GOARCH..."; \
 		GOOS=$$GOOS GOARCH=$$GOARCH go build -o $$binary_name .; \
 		echo "✅ Built $$binary_name for $$GOOS/$$GOARCH"; \
-		mv $$binary_name $(BINARY_NAME)-$$GOOS-$$GOARCH$${binary_name#$(BINARY_NAME)}; \
+		mv $$binary_name $(BINARY_NAME)_${VERSION}_$$GOOS_$$GOARCH$${binary_name#$(BINARY_NAME)}; \
 	done
 	@echo "✅ All release binaries built successfully!"
 
@@ -406,9 +406,9 @@ release-archives: release-build ## Create tar.gz archives for all platforms (inc
 		else \
 			binary_name="$(BINARY_NAME)"; \
 		fi; \
-		archive_name="$(BINARY_NAME)-$$GOOS-$$GOARCH.tar.gz"; \
+		archive_name="$(BINARY_NAME)_${VERSION}_$$GOOS_$$GOARCH.tar.gz"; \
 		echo "Creating $$archive_name..."; \
-		tar czf $$archive_name LICENSE $(BINARY_NAME)-$$GOOS-$$GOARCH$${binary_name#$(BINARY_NAME)}; \
+		tar czf $$archive_name LICENSE $(BINARY_NAME)_${VERSION}_$$GOOS_$$GOARCH$${binary_name#$(BINARY_NAME)}; \
 		sha256sum $$archive_name > $$archive_name.sha256; \
 		echo "✅ Created $$archive_name with LICENSE"; \
 	done
@@ -443,7 +443,7 @@ content = re.sub(r'download/v1\.0\.0/', f'download/{version}/', content); \
 \
 for goos, goarch in platforms: \
     binary_suffix = '.exe' if goos == 'windows' else ''; \
-    sha_file = f'kubectl-oadp-{goos}-{goarch}.tar.gz.sha256'; \
+    sha_file = f'kubectl-oadp_${VERSION}_{goos}_{goarch}.tar.gz.sha256'; \
     if os.path.exists(sha_file): \
         with open(sha_file, 'r') as sf: \
             sha256 = sf.read().split()[0]; \
@@ -464,7 +464,7 @@ print(f'✅ Krew manifest generated: oadp-{version}.yaml'); \
 		for platform in $(PLATFORMS); do \
 			GOOS=$$(echo $$platform | cut -d'/' -f1); \
 			GOARCH=$$(echo $$platform | cut -d'/' -f2); \
-			sha_file="kubectl-oadp-$$GOOS-$$GOARCH.tar.gz.sha256"; \
+			sha_file="kubectl-oadp_${VERSION}_$$GOOS_$$GOARCH.tar.gz.sha256"; \
 			if [ -f "$$sha_file" ]; then \
 				sha256=$$(cat $$sha_file | cut -d' ' -f1); \
 				echo "  ✅ $$GOOS/$$GOARCH: $$sha256"; \
