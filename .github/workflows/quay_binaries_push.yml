@@ -5,34 +5,113 @@ on:
   push:
     tags:
       - 'v*'
+  pull_request:
+    
 
 # Check out code, podman login, run podman build, push to 
 jobs:
-  push-binaries:
+  single-arch-build:
+    name: Single-Arch Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Podman login
-        run: podman login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
+      - name: Checkout Buildah action
+        uses: actions/checkout@v4
+        with:
+          path: "buildah-build"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Install qemu dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
       
-      - name: Podman build and tag
+      - name: Build Image
+        id: build_image_singlearch
+        uses: ./buildah-build/
+        with:
+          image: quay.io/konveyor/oadp-cli-binaries
+          tags: latest ${{ github.ref_name }}
+          archs: amd64
+          containerfiles: |
+            ./Containerfile.download
+
+      - name: Echo Outputs
+        run: |
+          echo "Image: ${{ steps.build_image_singlearch.outputs.image }}"
+          echo "Tags: ${{ steps.build_image_singlearch.outputs.tags }}"
+          echo "Tagged Image: ${{ steps.build_image_singlearch.outputs.image-with-tag }}"
+
+      - name: Check images created
+        run: buildah images | grep 'quay.io/konveyor/oadp-cli-binaries'
+        
+      - name: Check image metadata
+        run: |
+          set -x
+          buildah inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }} | jq ".OCIv1.architecture"
+          buildah inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }} | jq ".Docker.architecture"
+  
+  multi-arch-build:
+    name: Multi-Arch Build
+    runs-on: ubuntu-latest
+    needs: single-arch-build
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout Buildah action
+        uses: actions/checkout@v4
+        with:
+          path: "buildah-build"
+
+      - name: Install qemu dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+      
+      - name: Build Image
+        id: build_image_multiarch
+        uses: ./buildah-build/
+        with:
+          image: quay.io/konveyor/oadp-cli-binaries
+          tags: latest ${{ github.ref_name }}
+          archs: amd64,arm64,ppc64le,s390x
+          containerfiles: |
+            ./Containerfile.download
+
+      - name: Echo Outputs
+        run: |
+          echo "Image: ${{ steps.build_image_multiplatform.outputs.image }}"
+          echo "Tags: ${{ steps.build_image_multiplatform.outputs.tags }}"
+          echo "Tagged Image: ${{ steps.build_image_multiplatform.outputs.image-with-tag }}"
+    
+      - name: Check images created
+        run: buildah images | grep '${{ env.IMAGE_NAME }}'
+
+      - name: Check manifest
+        run: |
+          set -x
+          buildah manifest inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
+      - name: Buildah login
+        run: buildah login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
+
+      - name: Buildah build and tag
         run: |
           # Create manifest
-          podman manifest create oadp-cli-binaries
+          buildah manifest create oadp-cli-binaries
 
-          podman build \
+          buildah build \
             --platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
             --manifest oadp-cli-binaries \
-            -f Dockerfile.download \ 
+            -f Containerfile.download \ 
             .
       
-      - name: Podman push version tag
-        run: podman manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
+      - name: Buildah push version tag
+        if: startsWith(github.ref_name, 'v')
+        run: buildah manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
       
-      - name: Podman push latest tag
-        run: podman manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:latest
+      - name: Buildah push latest tag
+        if: startsWith(github.ref_name, 'v')
+        run: buildah manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:latest
