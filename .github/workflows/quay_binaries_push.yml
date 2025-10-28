@@ -30,7 +30,7 @@ jobs:
         with:
           image: quay.io/konveyor/oadp-cli-binaries
           tags: ${{ github.ref_type == 'tag' && format('latest {0}', github.ref_name) || 'test' }}
-          archs: amd64,arm64,ppc64le,s390x
+          archs: amd64,arm64
           containerfiles: |
             ./Containerfile.download
 
