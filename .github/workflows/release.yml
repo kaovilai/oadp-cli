@@ -193,6 +193,8 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+    
+    # Skip this step if it is not a clean semver: eg if it has -beta, or any other suffix, do not run
     - name: Update new version in krew-index
+      if: ${{!contains(github.ref_name, '-') && !contains(github.ref_name, '+')}}
       uses: rajatjindal/krew-release-bot@v0.0.46
