@@ -17,14 +17,22 @@ jobs:
       - name: Podman login
         run: podman login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
       - name: Podman build and tag
         run: |
-          podman build -f Dockerfile.download \
-            -t quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }} \
-            -t quay.io/konveyor/oadp-cli-binaries:latest .
+          # Create manifest
+          podman manifest create oadp-cli-binaries
+
+          podman build \
+            --platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
+            --manifest oadp-cli-binaries \
+            -f Dockerfile.download \ 
+            .
       
       - name: Podman push version tag
-        run: podman push quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
+        run: podman manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
       
       - name: Podman push latest tag
-        run: podman push quay.io/konveyor/oadp-cli-binaries:latest
+        run: podman manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:latest
