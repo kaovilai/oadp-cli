@@ -17,11 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Checkout Buildah action
-        uses: actions/checkout@v4
-        with:
-          path: "buildah-build"
-
       - name: Install qemu dependency
         run: |
           sudo apt-get update
@@ -29,7 +24,7 @@ jobs:
       
       - name: Build Image
         id: build_image_singlearch
-        uses: ./buildah-build/
+        uses: redhat-actions/buildah-build@v2
         with:
           image: quay.io/konveyor/oadp-cli-binaries
           tags: latest ${{ github.ref_name }}
@@ -61,11 +56,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Checkout Buildah action
-        uses: actions/checkout@v4
-        with:
-          path: "buildah-build"
-
       - name: Install qemu dependency
         run: |
           sudo apt-get update
@@ -73,7 +63,7 @@ jobs:
       
       - name: Build Image
         id: build_image_multiarch
-        uses: ./buildah-build/
+        uses: redhat-actions/buildah-build@v2
         with:
           image: quay.io/konveyor/oadp-cli-binaries
           tags: latest ${{ github.ref_name }}
