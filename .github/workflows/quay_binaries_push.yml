@@ -30,18 +30,18 @@ jobs:
         with:
           image: quay.io/konveyor/oadp-cli-binaries
           tags: ${{ github.ref_type == 'tag' && format('latest {0}', github.ref_name) || 'test' }}
-          archs: amd64,arm64
+          archs: amd64,arm64,ppc64le,s390x
           containerfiles: |
             ./Containerfile.download
 
       - name: Echo Outputs
         run: |
-          echo "Image: ${{ steps.build_image_multiplatform.outputs.image }}"
-          echo "Tags: ${{ steps.build_image_multiplatform.outputs.tags }}"
-          echo "Tagged Image: ${{ steps.build_image_multiplatform.outputs.image-with-tag }}"
+          echo "Image: ${{ steps.build_image_multiarch.outputs.image }}"
+          echo "Tags: ${{ steps.build_image_multiarch.outputs.tags }}"
+          echo "Tagged Image: ${{ steps.build_image_multiarch.outputs.image-with-tag }}"
     
       - name: Check images created
-        run: buildah images | grep '${{ env.IMAGE_NAME }}'
+        run: buildah images | grep 'quay.io/konveyor/oadp-cli-binaries'
 
       - name: Check manifest
         run: |
@@ -49,22 +49,11 @@ jobs:
           buildah manifest inspect ${{ steps.build_image_multiarch.outputs.image-with-tag }}
       - name: Buildah login
         run: buildah login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
-
-      - name: Buildah build and tag
-        run: |
-          # Create manifest
-          buildah manifest create oadp-cli-binaries
-
-          buildah build \
-            --platform=linux/amd64,linux/arm64 \
-            --manifest oadp-cli-binaries \
-            -f Containerfile.download \ 
-            .
       
       - name: Buildah push version tag
         if: startsWith(github.ref_name, 'v')
-        run: buildah manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
+        run: buildah manifest push ${{ steps.build_image_multiarch.outputs.image-with-tag }} quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
       
       - name: Buildah push latest tag
         if: startsWith(github.ref_name, 'v')
-        run: buildah manifest push oadp-cli-binaries quay.io/konveyor/oadp-cli-binaries:latest
+        run: buildah manifest push ${{ steps.build_image_multiarch.outputs.image-with-tag }} quay.io/konveyor/oadp-cli-binaries:latest
