@@ -44,8 +44,8 @@ jobs:
       - name: Check image metadata
         run: |
           set -x
-          buildah inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }} | jq ".OCIv1.architecture"
-          buildah inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }} | jq ".Docker.architecture"
+          buildah inspect ${{ steps.build_image_singlearch.outputs.image-with-tag }} | jq ".OCIv1.architecture"
+          buildah inspect ${{ steps.build_image_singlearch.outputs.image-with-tag }} | jq ".Docker.architecture"
   
   multi-arch-build:
     name: Multi-Arch Build
@@ -83,7 +83,7 @@ jobs:
       - name: Check manifest
         run: |
           set -x
-          buildah manifest inspect quay.io/konveyor/oadp-cli-binaries:${{ github.ref_name }}
+          buildah manifest inspect ${{ steps.build_image_multiarch.outputs.image-with-tag }}
       - name: Buildah login
         run: buildah login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
 
