@@ -10,47 +10,10 @@ on:
 
 # Check out code, podman login, run podman build, push to 
 jobs:
-  single-arch-build:
-    name: Single-Arch Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install qemu dependency
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static
-      
-      - name: Build Image
-        id: build_image_singlearch
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: quay.io/konveyor/oadp-cli-binaries
-          tags: ${{ github.ref_type == 'tag' && format('latest {0}', github.ref_name) || 'test' }}
-          archs: amd64
-          containerfiles: |
-            ./Containerfile.download
-
-      - name: Echo Outputs
-        run: |
-          echo "Image: ${{ steps.build_image_singlearch.outputs.image }}"
-          echo "Tags: ${{ steps.build_image_singlearch.outputs.tags }}"
-          echo "Tagged Image: ${{ steps.build_image_singlearch.outputs.image-with-tag }}"
-
-      - name: Check images created
-        run: buildah images | grep 'quay.io/konveyor/oadp-cli-binaries'
-        
-      - name: Check image metadata
-        run: |
-          set -x
-          buildah inspect ${{ steps.build_image_singlearch.outputs.image-with-tag }} | jq ".OCIv1.architecture"
-          buildah inspect ${{ steps.build_image_singlearch.outputs.image-with-tag }} | jq ".Docker.architecture"
   
   multi-arch-build:
     name: Multi-Arch Build
     runs-on: ubuntu-latest
-    needs: single-arch-build
     steps:
 
       - name: Checkout code
@@ -93,7 +56,7 @@ jobs:
           buildah manifest create oadp-cli-binaries
 
           buildah build \
-            --platform=linux/amd64,linux/arm64,linux/ppc64le,linux/s390x \
+            --platform=linux/amd64,linux/arm64 \
             --manifest oadp-cli-binaries \
             -f Containerfile.download \ 
             .
