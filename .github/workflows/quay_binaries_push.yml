@@ -64,17 +64,17 @@ jobs:
 
       - name: Load images and create manifest
         run: |
-          # Load all arch images
-          buildah pull oci-archive:oadp-cli-image-amd64/oadp-cli-amd64.tar
-          buildah pull oci-archive:oadp-cli-image-arm64/oadp-cli-arm64.tar
-          buildah pull oci-archive:oadp-cli-image-ppc64le/oadp-cli-ppc64le.tar
-          buildah pull oci-archive:oadp-cli-image-s390x/oadp-cli-s390x.tar
-          
-          # Tag them for manifest
-          buildah tag localhost/oadp-cli-binaries-local:amd64 ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-amd64
-          buildah tag localhost/oadp-cli-binaries-local:arm64 ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-arm64
-          buildah tag localhost/oadp-cli-binaries-local:ppc64le ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-ppc64le
-          buildah tag localhost/oadp-cli-binaries-local:s390x ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-s390x
+          # Load all arch images and capture their IDs
+          AMD64_ID=$(buildah pull oci-archive:oadp-cli-image-amd64/oadp-cli-amd64.tar)
+          ARM64_ID=$(buildah pull oci-archive:oadp-cli-image-arm64/oadp-cli-arm64.tar)
+          PPC64LE_ID=$(buildah pull oci-archive:oadp-cli-image-ppc64le/oadp-cli-ppc64le.tar)
+          S390X_ID=$(buildah pull oci-archive:oadp-cli-image-s390x/oadp-cli-s390x.tar)
+
+          # Tag the loaded images using their IDs
+          buildah tag $AMD64_ID ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-amd64
+          buildah tag $ARM64_ID ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-arm64
+          buildah tag $PPC64LE_ID ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-ppc64le
+          buildah tag $S390X_ID ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-s390x
 
       - name: Buildah login
         run: buildah login -u ${{ secrets.QUAY_USER }} -p ${{ secrets.QUAY_TOKEN }} quay.io
