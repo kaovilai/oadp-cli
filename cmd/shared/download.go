@@ -17,11 +17,11 @@ limitations under the License.
 package shared
 
 import (
+	"bufio"
 	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -53,17 +53,14 @@ func getHTTPTimeout() time.Duration {
 func GetHTTPTimeoutWithOverride(override time.Duration) time.Duration {
 	// If an explicit override is provided (e.g., from --timeout flag), use it
 	if override > 0 {
-		log.Printf("Using HTTP timeout from command-line flag: %v", override)
 		return override
 	}
 
 	// Check for environment variable
 	if envTimeout := os.Getenv(TimeoutEnvVar); envTimeout != "" {
 		if parsed, err := time.ParseDuration(envTimeout); err == nil {
-			log.Printf("Using custom HTTP timeout from %s: %v", TimeoutEnvVar, parsed)
 			return parsed
 		}
-		log.Printf("Warning: Invalid duration in %s=%q, using default %v", TimeoutEnvVar, envTimeout, DefaultHTTPTimeout)
 	}
 
 	return DefaultHTTPTimeout
@@ -92,12 +89,14 @@ type DownloadRequestOptions struct {
 	// HTTPTimeout is the timeout for downloading content from the signed URL.
 	// If zero, uses the default timeout (env var or DefaultHTTPTimeout).
 	HTTPTimeout time.Duration
+	// OnProgress is an optional callback called on each polling iteration
+	OnProgress func()
 }
 
-// ProcessDownloadRequest creates a NonAdminDownloadRequest, waits for it to be processed,
-// downloads the content from the signed URL, and returns it as a string.
-// This function automatically cleans up the download request when done.
-func ProcessDownloadRequest(ctx context.Context, kbClient kbclient.Client, opts DownloadRequestOptions) (string, error) {
+// CreateAndWaitForDownloadURL creates a NonAdminDownloadRequest, waits for it to be processed,
+// and returns the signed URL. The request is NOT automatically cleaned up - caller is responsible.
+// This is a lower-level function that allows callers to control cleanup timing.
+func CreateAndWaitForDownloadURL(ctx context.Context, kbClient kbclient.Client, opts DownloadRequestOptions) (*nacv1alpha1.NonAdminDownloadRequest, string, error) {
 	// Set defaults
 	if opts.Timeout == 0 {
 		opts.Timeout = 120 * time.Second
@@ -121,7 +120,31 @@ func ProcessDownloadRequest(ctx context.Context, kbClient kbclient.Client, opts 
 	}
 
 	if err := kbClient.Create(ctx, req); err != nil {
-		return "", fmt.Errorf("failed to create NonAdminDownloadRequest for %s: %w", opts.DataType, err)
+		return nil, "", fmt.Errorf("failed to create NonAdminDownloadRequest for %s: %w", opts.DataType, err)
+	}
+
+	// Wait for the download request to be processed
+	signedURL, err := waitForDownloadURL(ctx, kbClient, req, opts.Timeout, opts.PollInterval, opts.OnProgress)
+	if err != nil {
+		return req, "", err
+	}
+
+	return req, signedURL, nil
+}
+
+// ProcessDownloadRequest creates a NonAdminDownloadRequest, waits for it to be processed,
+// downloads the content from the signed URL, and returns it as a string.
+// This function automatically cleans up the download request when done.
+func ProcessDownloadRequest(ctx context.Context, kbClient kbclient.Client, opts DownloadRequestOptions) (string, error) {
+	req, signedURL, err := CreateAndWaitForDownloadURL(ctx, kbClient, opts)
+	if err != nil {
+		if req != nil {
+			// Clean up on error
+			deleteCtx, cancelDelete := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelDelete()
+			_ = kbClient.Delete(deleteCtx, req)
+		}
+		return "", err
 	}
 
 	// Clean up the download request when done
@@ -131,19 +154,18 @@ func ProcessDownloadRequest(ctx context.Context, kbClient kbclient.Client, opts 
 		_ = kbClient.Delete(deleteCtx, req)
 	}()
 
-	// Wait for the download request to be processed
-	signedURL, err := waitForDownloadURL(ctx, kbClient, req, opts.Timeout, opts.PollInterval)
+	// Download and return the content using the specified HTTP timeout
+	httpTimeout := GetHTTPTimeoutWithOverride(opts.HTTPTimeout)
+	content, err := DownloadContentWithTimeout(signedURL, httpTimeout)
 	if err != nil {
 		return "", err
 	}
-
-	// Download and return the content using the specified HTTP timeout
-	httpTimeout := GetHTTPTimeoutWithOverride(opts.HTTPTimeout)
-	return DownloadContentWithTimeout(signedURL, httpTimeout)
+	return content, nil
 }
 
-// waitForDownloadURL waits for a NonAdminDownloadRequest to be processed and returns the signed URL
-func waitForDownloadURL(ctx context.Context, kbClient kbclient.Client, req *nacv1alpha1.NonAdminDownloadRequest, timeout, pollInterval time.Duration) (string, error) {
+// waitForDownloadURL waits for a NonAdminDownloadRequest to be processed and returns the signed URL.
+// If onProgress is provided, it will be called on each polling iteration.
+func waitForDownloadURL(ctx context.Context, kbClient kbclient.Client, req *nacv1alpha1.NonAdminDownloadRequest, timeout, pollInterval time.Duration, onProgress func()) (string, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -155,11 +177,19 @@ func waitForDownloadURL(ctx context.Context, kbClient kbclient.Client, req *nacv
 		case <-timeoutCtx.Done():
 			return "", fmt.Errorf("timed out waiting for NonAdminDownloadRequest to be processed")
 		case <-ticker.C:
+			if onProgress != nil {
+				onProgress()
+			}
+
 			var updated nacv1alpha1.NonAdminDownloadRequest
 			if err := kbClient.Get(ctx, kbclient.ObjectKey{
 				Namespace: req.Namespace,
 				Name:      req.Name,
 			}, &updated); err != nil {
+				// If context expired during Get, let next iteration handle it
+				if ctx.Err() != nil {
+					continue
+				}
 				return "", fmt.Errorf("failed to get NonAdminDownloadRequest: %w", err)
 			}
 
@@ -193,6 +223,7 @@ func DownloadContent(url string) (string, error) {
 // It handles both gzipped and non-gzipped content automatically.
 func DownloadContentWithTimeout(url string, timeout time.Duration) (string, error) {
 	client := httpClientWithTimeout(timeout)
+
 	resp, err := client.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("failed to download content from URL %q: %w", url, err)
@@ -204,10 +235,27 @@ func DownloadContentWithTimeout(url string, timeout time.Duration) (string, erro
 		return "", fmt.Errorf("failed to download content: status %s, body: %s", resp.Status, string(bodyBytes))
 	}
 
-	// Try to decompress if it's gzipped
-	var reader io.Reader = resp.Body
-	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		gzr, err := gzip.NewReader(resp.Body)
+	// Use a buffered reader to peek at the content and detect gzip format
+	bufReader := bufio.NewReader(resp.Body)
+	var reader io.Reader = bufReader
+
+	// Check if content is gzipped by:
+	// 1. Content-Encoding header (HTTP-level compression)
+	// 2. Magic bytes 0x1f 0x8b at start (file-level gzip)
+	// Object storage signed URLs often serve .gz files without Content-Encoding header,
+	// so we need to detect gzip by inspecting the actual file content.
+	isGzipped := strings.Contains(resp.Header.Get("Content-Encoding"), "gzip")
+
+	if !isGzipped {
+		// Peek at first 2 bytes to check for gzip magic bytes (0x1f 0x8b)
+		magicBytes, err := bufReader.Peek(2)
+		if err == nil && len(magicBytes) == 2 && magicBytes[0] == 0x1f && magicBytes[1] == 0x8b {
+			isGzipped = true
+		}
+	}
+
+	if isGzipped {
+		gzr, err := gzip.NewReader(bufReader)
 		if err != nil {
 			return "", fmt.Errorf("failed to create gzip reader: %w", err)
 		}
@@ -246,10 +294,27 @@ func StreamDownloadContentWithTimeout(url string, writer io.Writer, timeout time
 		return fmt.Errorf("failed to download content: status %s, body: %s", resp.Status, string(bodyBytes))
 	}
 
-	// Try to decompress if it's gzipped
-	var reader io.Reader = resp.Body
-	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
-		gzr, err := gzip.NewReader(resp.Body)
+	// Use a buffered reader to peek at the content and detect gzip format
+	bufReader := bufio.NewReader(resp.Body)
+	var reader io.Reader = bufReader
+
+	// Check if content is gzipped by:
+	// 1. Content-Encoding header (HTTP-level compression)
+	// 2. Magic bytes 0x1f 0x8b at start (file-level gzip)
+	// Object storage signed URLs often serve .gz files without Content-Encoding header,
+	// so we need to detect gzip by inspecting the actual file content.
+	isGzipped := strings.Contains(resp.Header.Get("Content-Encoding"), "gzip")
+
+	if !isGzipped {
+		// Peek at first 2 bytes to check for gzip magic bytes (0x1f 0x8b)
+		magicBytes, err := bufReader.Peek(2)
+		if err == nil && len(magicBytes) == 2 && magicBytes[0] == 0x1f && magicBytes[1] == 0x8b {
+			isGzipped = true
+		}
+	}
+
+	if isGzipped {
+		gzr, err := gzip.NewReader(bufReader)
 		if err != nil {
 			return fmt.Errorf("failed to create gzip reader: %w", err)
 		}
