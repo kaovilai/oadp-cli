@@ -387,6 +387,11 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	baseFactory := clientcmd.NewFactory(baseName, config)
 	f := &timeoutFactory{Factory: baseFactory}
 
+	// Bind factory flags to enable -n/--namespace flag for admin commands.
+	// This allows admin Velero and NABSL commands to accept namespace via CLI flag.
+	// Nonadmin commands continue using GetCurrentNamespace() for security isolation.
+	f.BindFlags(c.PersistentFlags())
+
 	c.AddCommand(
 		backup.NewCommand(f),
 		schedule.NewCommand(f),
@@ -414,7 +419,12 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	c.AddCommand(nonadmin.NewNonAdminCommand(f))
 
 	// Apply velero->oadp replacement to all commands recursively
+	// Skip nonadmin commands since we have full control over their output
 	for _, cmd := range c.Commands() {
+		// Don't wrap nonadmin commands - we control them and they already use correct terminology
+		if cmd.Use == "nonadmin" || cmd.Use == "nabsl-request" {
+			continue
+		}
 		replaceVeleroWithOADP(cmd)
 	}
 

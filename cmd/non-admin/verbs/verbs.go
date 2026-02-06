@@ -25,6 +25,7 @@ import (
 func NewGetCommand(factory client.Factory) *cobra.Command {
 	builder := NewNonAdminVerbBuilder(factory)
 	RegisterBackupResources(builder, "get")
+	RegisterRestoreResources(builder, "get")
 	RegisterBSLResources(builder, "get")
 
 	return builder.BuildVerbCommand(NonAdminVerbConfig{
@@ -36,6 +37,12 @@ func NewGetCommand(factory client.Factory) *cobra.Command {
 
   # Get a specific non-admin backup
   kubectl oadp nonadmin get backup my-backup
+
+  # Get all non-admin restores
+  kubectl oadp nonadmin get restore
+
+  # Get a specific non-admin restore
+  kubectl oadp nonadmin get restore my-restore
 
   # Get all non-admin backup storage locations
   kubectl oadp nonadmin get bsl
@@ -49,6 +56,7 @@ func NewGetCommand(factory client.Factory) *cobra.Command {
 func NewCreateCommand(factory client.Factory) *cobra.Command {
 	builder := NewNonAdminVerbBuilder(factory)
 	RegisterBackupResources(builder, "create")
+	RegisterRestoreResources(builder, "create")
 	RegisterBSLResources(builder, "create")
 
 	return builder.BuildVerbCommand(NonAdminVerbConfig{
@@ -57,6 +65,9 @@ func NewCreateCommand(factory client.Factory) *cobra.Command {
 		Long:  "Create non-admin resources. This is a verb-based command that delegates to the appropriate noun command.",
 		Example: `  # Create a non-admin backup
   kubectl oadp nonadmin create backup my-backup
+
+  # Create a non-admin restore
+  kubectl oadp nonadmin create restore my-restore --backup-name my-backup
 
   # Create a backup storage location
   kubectl oadp nonadmin create bsl my-bsl`,
@@ -67,6 +78,7 @@ func NewCreateCommand(factory client.Factory) *cobra.Command {
 func NewDeleteCommand(factory client.Factory) *cobra.Command {
 	builder := NewNonAdminVerbBuilder(factory)
 	RegisterBackupResources(builder, "delete")
+	RegisterRestoreResources(builder, "delete")
 	RegisterBSLResources(builder, "delete")
 
 	return builder.BuildVerbCommand(NonAdminVerbConfig{
@@ -74,7 +86,10 @@ func NewDeleteCommand(factory client.Factory) *cobra.Command {
 		Short: "Delete non-admin resources",
 		Long:  "Delete non-admin resources. This is a verb-based command that delegates to the appropriate noun command.",
 		Example: `  # Delete a non-admin backup
-  kubectl oadp nonadmin delete backup my-backup`,
+  kubectl oadp nonadmin delete backup my-backup
+
+  # Delete a non-admin restore
+  kubectl oadp nonadmin delete restore my-restore`,
 	})
 }
 
@@ -82,6 +97,7 @@ func NewDeleteCommand(factory client.Factory) *cobra.Command {
 func NewDescribeCommand(factory client.Factory) *cobra.Command {
 	builder := NewNonAdminVerbBuilder(factory)
 	RegisterBackupResources(builder, "describe")
+	RegisterRestoreResources(builder, "describe")
 	RegisterBSLResources(builder, "describe")
 
 	return builder.BuildVerbCommand(NonAdminVerbConfig{
@@ -89,7 +105,10 @@ func NewDescribeCommand(factory client.Factory) *cobra.Command {
 		Short: "Describe non-admin resources",
 		Long:  "Describe non-admin resources. This is a verb-based command that delegates to the appropriate noun command.",
 		Example: `  # Describe a non-admin backup
-  kubectl oadp nonadmin describe backup my-backup`,
+  kubectl oadp nonadmin describe backup my-backup
+
+  # Describe a non-admin restore
+  kubectl oadp nonadmin describe restore my-restore`,
 	})
 }
 
@@ -97,6 +116,7 @@ func NewDescribeCommand(factory client.Factory) *cobra.Command {
 func NewLogsCommand(factory client.Factory) *cobra.Command {
 	builder := NewNonAdminVerbBuilder(factory)
 	RegisterBackupResources(builder, "logs")
+	RegisterRestoreResources(builder, "logs")
 	RegisterBSLResources(builder, "logs")
 
 	return builder.BuildVerbCommand(NonAdminVerbConfig{
@@ -104,6 +124,9 @@ func NewLogsCommand(factory client.Factory) *cobra.Command {
 		Short: "Get logs for non-admin resources",
 		Long:  "Get logs for non-admin resources. This is a verb-based command that delegates to the appropriate noun command.",
 		Example: `  # Get logs for a non-admin backup
-  kubectl oadp nonadmin logs backup my-backup`,
+  kubectl oadp nonadmin logs backup my-backup
+
+  # Get logs for a non-admin restore
+  kubectl oadp nonadmin logs restore my-restore`,
 	})
 }
