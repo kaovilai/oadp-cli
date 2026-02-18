@@ -462,8 +462,8 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 		renameTimeoutFlag(cmd)
 	}
 
-	// When nonadmin mode is enabled, hide all admin commands so only
-	// nonadmin and client (for toggling the config) are visible.
+	// When nonadmin mode is enabled, remove all admin commands so only
+	// nonadmin, client (for toggling the config), and help are available.
 	if isNonadminEnabled(config) {
 		allowedCmds := map[string]bool{
 			"nonadmin":   true,
@@ -472,7 +472,7 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 		}
 		for _, cmd := range c.Commands() {
 			if !allowedCmds[cmd.Use] {
-				cmd.Hidden = true
+				c.RemoveCommand(cmd)
 			}
 		}
 	}
