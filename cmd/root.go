@@ -49,7 +49,7 @@ import (
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/create"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/datamover"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/debug"
-	"github.com/vmware-tanzu/velero/pkg/cmd/cli/delete"
+	veldelete "github.com/vmware-tanzu/velero/pkg/cmd/cli/delete"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/describe"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/get"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/repo"
@@ -349,12 +349,37 @@ func wrapPreRunE(existing func(*cobra.Command, []string) error, additional func(
 	}
 }
 
+// isNonadminEnabled checks if nonadmin mode is enabled in the VeleroConfig.
+// Handles both boolean and string representations since
+// `oc oadp client config set nonadmin=true` stores the value as a string.
+func isNonadminEnabled(config clientcmd.VeleroConfig) bool {
+	val, ok := config["nonadmin"]
+	if !ok {
+		return false
+	}
+	switch v := val.(type) {
+	case bool:
+		return v
+	case string:
+		return strings.EqualFold(v, "true")
+	default:
+		return false
+	}
+}
+
 // NewVeleroRootCommand returns a root command with all Velero CLI subcommands attached.
 func NewVeleroRootCommand(baseName string) *cobra.Command {
 
 	config, err := clientcmd.LoadConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "WARNING: Error reading config file: %v\n", err)
+	}
+
+	// When nonadmin mode is enabled, remove the namespace override so the
+	// factory uses the current kubeconfig context namespace instead of an
+	// admin namespace like openshift-adp.
+	if isNonadminEnabled(config) {
+		delete(config, clientcmd.ConfigKeyNamespace)
 	}
 
 	// Declare cmdFeatures and cmdColorzied here so we can access them in the PreRun hooks
@@ -401,7 +426,7 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 		get.NewCommand(f),
 		describe.NewCommand(f),
 		create.NewCommand(f),
-		delete.NewCommand(f),
+		veldelete.NewCommand(f),
 		cliclient.NewCommand(),
 		completion.NewCommand(),
 		repo.NewCommand(f),
@@ -435,6 +460,21 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	// Rename --timeout flags to --request-timeout for kubectl consistency
 	for _, cmd := range c.Commands() {
 		renameTimeoutFlag(cmd)
+	}
+
+	// When nonadmin mode is enabled, hide all admin commands so only
+	// nonadmin and client (for toggling the config) are visible.
+	if isNonadminEnabled(config) {
+		allowedCmds := map[string]bool{
+			"nonadmin":   true,
+			"client":     true,
+			"completion": true,
+		}
+		for _, cmd := range c.Commands() {
+			if !allowedCmds[cmd.Use] {
+				cmd.Hidden = true
+			}
+		}
 	}
 
 	// Set custom usage template to show "oc oadp" instead of just "oadp"
