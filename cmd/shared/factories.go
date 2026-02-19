@@ -21,13 +21,32 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/vmware-tanzu/velero/pkg/client"
 )
 
 // ClientConfig represents the structure of the Velero client configuration file
 type ClientConfig struct {
-	Namespace string `json:"namespace"`
+	Namespace string      `json:"namespace"`
+	NonAdmin  interface{} `json:"nonadmin,omitempty"`
+}
+
+// IsNonAdmin returns true if the nonadmin configuration is enabled.
+// Handles both boolean and string representations since
+// `oc oadp client config set nonadmin=true` stores the value as a string.
+func (c *ClientConfig) IsNonAdmin() bool {
+	if c == nil {
+		return false
+	}
+	switch v := c.NonAdmin.(type) {
+	case bool:
+		return v
+	case string:
+		return strings.EqualFold(v, "true")
+	default:
+		return false
+	}
 }
 
 // CreateVeleroFactory creates a client factory for Velero operations (admin-scoped)
