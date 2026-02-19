@@ -123,9 +123,7 @@ func (o *GetOptions) Run(c *cobra.Command, f client.Factory) error {
 
 	// List all requests in admin namespace
 	var requestList nacv1alpha1.NonAdminBackupStorageLocationRequestList
-	var err error
-
-	err = o.client.List(context.Background(), &requestList, &kbclient.ListOptions{
+	var err error = o.client.List(context.Background(), &requestList, &kbclient.ListOptions{
 		Namespace: adminNS,
 	})
 
