@@ -19,8 +19,8 @@ package nabsl
 import (
 	"context"
 	"fmt"
+	"os"
 	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,8 +54,8 @@ func NewDescribeCommand(f client.Factory) *cobra.Command {
 }
 
 type DescribeOptions struct {
-	Name   string
-	client kbclient.WithWatch
+	UUID_Name string
+	client    kbclient.WithWatch
 }
 
 func NewDescribeOptions() *DescribeOptions {
@@ -63,7 +63,7 @@ func NewDescribeOptions() *DescribeOptions {
 }
 
 func (o *DescribeOptions) Complete(args []string, f client.Factory) error {
-	o.Name = args[0]
+	o.UUID_Name = args[0]
 
 	client, err := shared.NewClientWithScheme(f, shared.ClientOptions{
 		IncludeVeleroTypes:   true,
@@ -85,115 +85,97 @@ func (o *DescribeOptions) Run(c *cobra.Command, f client.Factory) error {
 	// Get the admin namespace (from client config) where requests are stored
 	adminNS := f.Namespace()
 
-	// Get the current namespace to find user's NABSLs
-	currentNS, err := shared.GetCurrentNamespace()
-	if err != nil {
-		return fmt.Errorf("failed to determine current namespace: %w", err)
-	}
-
-	// First get all NABSLs in user's namespace to find related requests
-	var nabslList nacv1alpha1.NonAdminBackupStorageLocationList
-	err = o.client.List(context.Background(), &nabslList, kbclient.InNamespace(currentNS))
-	if err != nil {
-		return fmt.Errorf("failed to list NABSLs: %w", err)
-	}
-
-	// Find the target UUID for the request
-	var targetUUID string
-	for _, nabsl := range nabslList.Items {
-		if nabsl.Status.VeleroBackupStorageLocation != nil && nabsl.Status.VeleroBackupStorageLocation.NACUUID != "" {
-			uuid := nabsl.Status.VeleroBackupStorageLocation.NACUUID
-			// Check if o.Name matches the UUID or NABSL name
-			if uuid == o.Name || nabsl.Name == o.Name {
-				targetUUID = uuid
-				break
-			}
-		}
-	}
-
-	if targetUUID == "" {
-		return fmt.Errorf("request %q not found for NABSLs in namespace %s", o.Name, currentNS)
-	}
-
 	// Get the request from openshift-adp namespace using the UUID
 	var request nacv1alpha1.NonAdminBackupStorageLocationRequest
-	err = o.client.Get(context.Background(), kbclient.ObjectKey{
-		Name:      targetUUID,
+	err := o.client.Get(context.Background(), kbclient.ObjectKey{
+		Name:      o.UUID_Name,
 		Namespace: adminNS,
 	}, &request)
 	if err != nil {
-		return fmt.Errorf("failed to get request for %q: %w", o.Name, err)
+		return fmt.Errorf("failed to get request for %q: %w", o.UUID_Name, err)
 	}
 
 	return describeRequest(&request)
 }
 
 func describeRequest(request *nacv1alpha1.NonAdminBackupStorageLocationRequest) error {
-	fmt.Printf("Name:\t%s\n", request.Name)
-	fmt.Printf("Namespace:\t%s\n", request.Namespace)
+	// Name and Namespace
+	fmt.Printf("Name:         %s\n", request.Name)
+	fmt.Printf("Namespace:    %s\n", request.Namespace)
 
-	fmt.Printf("Labels:\t%s\n", formatLabels(request.Labels))
-	fmt.Printf("Annotations:\t%s\n", formatLabels(request.Annotations))
+	// Labels
+	shared.PrintLabelsOrAnnotations(os.Stdout, "Labels:       ", request.Labels)
 
-	fmt.Printf("Phase:\t%s\n", request.Status.Phase)
+	// Annotations
+	shared.PrintLabelsOrAnnotations(os.Stdout, "Annotations:  ", request.Annotations)
 
+	fmt.Printf("\n")
+
+	// Phase (with color)
+	fmt.Printf("Phase:  %s\n", shared.ColorizePhase(string(request.Status.Phase)))
+
+	fmt.Printf("\n")
+
+	// Approval Decision
 	if request.Spec.ApprovalDecision != "" {
-		fmt.Printf("Approval Decision:\t%s\n", request.Spec.ApprovalDecision)
+		fmt.Printf("Approval Decision:  %s\n", request.Spec.ApprovalDecision)
+		fmt.Printf("\n")
 	}
 
+	// Requested NonAdminBackupStorageLocation
 	if request.Status.SourceNonAdminBSL != nil {
 		source := request.Status.SourceNonAdminBSL
 		fmt.Printf("Requested NonAdminBackupStorageLocation:\n")
-		fmt.Printf("  Name:\t%s\n", source.Name)
-		fmt.Printf("  Namespace:\t%s\n", source.Namespace)
+		fmt.Printf("  Name:       %s\n", source.Name)
+		fmt.Printf("  Namespace:  %s\n", source.Namespace)
 
 		if source.NACUUID != "" {
-			fmt.Printf("  NACUUID:\t%s\n", source.NACUUID)
+			fmt.Printf("  NACUUID:    %s\n", source.NACUUID)
 		}
 
+		fmt.Printf("\n")
+
+		// Requested BackupStorageLocation Spec
 		if source.RequestedSpec != nil {
 			spec := source.RequestedSpec
 			fmt.Printf("Requested BackupStorageLocation Spec:\n")
-			fmt.Printf("  Provider:\t%s\n", spec.Provider)
-			fmt.Printf("  Object Storage Bucket:\t%s\n", spec.ObjectStorage.Bucket)
+			fmt.Printf("  Provider:                  %s\n", spec.Provider)
+			fmt.Printf("  Object Storage Bucket:     %s\n", spec.ObjectStorage.Bucket)
 
 			if spec.ObjectStorage.Prefix != "" {
-				fmt.Printf("  Prefix:\t%s\n", spec.ObjectStorage.Prefix)
+				fmt.Printf("  Prefix:                    %s\n", spec.ObjectStorage.Prefix)
 			}
 
 			if len(spec.Config) > 0 {
-				fmt.Printf("  Config:\t%s\n", formatLabels(spec.Config))
+				fmt.Printf("  Config:\n")
+				configKeys := make([]string, 0, len(spec.Config))
+				for k := range spec.Config {
+					configKeys = append(configKeys, k)
+				}
+				sort.Strings(configKeys)
+				for _, k := range configKeys {
+					fmt.Printf("    %s: %s\n", k, spec.Config[k])
+				}
 			}
 
 			if spec.AccessMode != "" {
-				fmt.Printf("  Access Mode:\t%s\n", spec.AccessMode)
+				fmt.Printf("  Access Mode:               %s\n", spec.AccessMode)
 			}
 
 			if spec.BackupSyncPeriod != nil {
-				fmt.Printf("  Backup Sync Period:\t%s\n", spec.BackupSyncPeriod.String())
+				fmt.Printf("  Backup Sync Period:        %s\n", spec.BackupSyncPeriod.String())
 			}
 
 			if spec.ValidationFrequency != nil {
-				fmt.Printf("  Validation Frequency:\t%s\n", spec.ValidationFrequency.String())
+				fmt.Printf("  Validation Frequency:      %s\n", spec.ValidationFrequency.String())
 			}
+
+			fmt.Printf("\n")
 		}
 	}
 
-	fmt.Printf("Creation Timestamp:\t%s\n", request.CreationTimestamp.String())
+	// Creation Timestamp
+	fmt.Printf("Creation Timestamp:  %s\n", request.CreationTimestamp.Time.Format("2006-01-02 15:04:05 -0700 MST"))
 
 	return nil
-}
-
-// formatLabels formats a map of labels into a string
-func formatLabels(labels map[string]string) string {
-	if len(labels) == 0 {
-		return "<none>"
-	}
-
-	var pairs []string
-	for key, value := range labels {
-		pairs = append(pairs, fmt.Sprintf("%s=%s", key, value))
-	}
-	sort.Strings(pairs)
-	return strings.Join(pairs, ",")
 }

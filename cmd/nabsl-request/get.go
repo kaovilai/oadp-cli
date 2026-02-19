@@ -23,7 +23,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/migtools/oadp-cli/cmd/shared"
@@ -43,7 +42,6 @@ func NewGetCommand(f client.Factory) *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		Run: func(c *cobra.Command, args []string) {
 			cmd.CheckError(o.Complete(args, f))
-			cmd.CheckError(o.Validate(c, args, f))
 			cmd.CheckError(o.Run(c, f))
 		},
 		Example: `  # Get all backup storage location requests (admin access required)
@@ -59,7 +57,6 @@ func NewGetCommand(f client.Factory) *cobra.Command {
   oc oadp nabsl-request get my-bsl-request -o yaml`,
 	}
 
-	o.BindFlags(c.Flags())
 	output.BindFlags(c.Flags())
 	output.ClearOutputFlagDefault(c)
 
@@ -67,20 +64,17 @@ func NewGetCommand(f client.Factory) *cobra.Command {
 }
 
 type GetOptions struct {
-	Name          string
-	AllNamespaces bool
-	client        kbclient.WithWatch
+	Name   string
+	client kbclient.WithWatch
 }
 
 func NewGetOptions() *GetOptions {
 	return &GetOptions{}
 }
 
-func (o *GetOptions) BindFlags(flags *pflag.FlagSet) {
-	flags.BoolVar(&o.AllNamespaces, "all-namespaces", false, "If present, list requests across all namespaces")
-}
-
+// Complete NABSL request get options
 func (o *GetOptions) Complete(args []string, f client.Factory) error {
+
 	if len(args) > 0 {
 		o.Name = args[0]
 	}
@@ -89,15 +83,12 @@ func (o *GetOptions) Complete(args []string, f client.Factory) error {
 		IncludeVeleroTypes:   true,
 		IncludeNonAdminTypes: true,
 	})
+
 	if err != nil {
 		return err
 	}
 
 	o.client = client
-	return nil
-}
-
-func (o *GetOptions) Validate(c *cobra.Command, args []string, f client.Factory) error {
 	return nil
 }
 
@@ -129,11 +120,11 @@ func (o *GetOptions) Run(c *cobra.Command, f client.Factory) error {
 	// List all requests in admin namespace
 	var requestList nacv1alpha1.NonAdminBackupStorageLocationRequestList
 	var err error
-	if o.AllNamespaces {
-		err = o.client.List(context.Background(), &requestList)
-	} else {
-		err = o.client.List(context.Background(), &requestList, kbclient.InNamespace(adminNS))
-	}
+
+	err = o.client.List(context.Background(), &requestList, &kbclient.ListOptions{
+		Namespace: adminNS,
+	})
+
 	if err != nil {
 		return fmt.Errorf("failed to list requests: %w", err)
 	}
