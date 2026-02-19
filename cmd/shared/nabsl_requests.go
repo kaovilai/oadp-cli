@@ -32,19 +32,18 @@ import (
 // This handles the common pattern where users can specify either the NABSL-friendly name
 // or the system-generated UUID for approval/rejection operations.
 func FindNABSLRequestByNameOrUUID(ctx context.Context, client kbclient.WithWatch, nameOrUUID string, adminNamespace string) (string, error) {
-	// First check if nameOrUUID is already a UUID by trying to get it directly
+
+	// UUID lookup
 	var testRequest nacv1alpha1.NonAdminBackupStorageLocationRequest
 	err := client.Get(ctx, kbclient.ObjectKey{
 		Name:      nameOrUUID,
 		Namespace: adminNamespace,
 	}, &testRequest)
 	if err == nil {
-		// Found it directly, it's a UUID
 		return nameOrUUID, nil
 	}
 
-	// Not found directly, so nameOrUUID might be a NABSL name
-	// We need to search through all requests to find one with matching source NABSL name
+	// Match NABSL name to UUID
 	var requestList nacv1alpha1.NonAdminBackupStorageLocationRequestList
 	err = client.List(ctx, &requestList, kbclient.InNamespace(adminNamespace))
 	if err != nil {

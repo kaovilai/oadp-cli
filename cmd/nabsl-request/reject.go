@@ -46,7 +46,6 @@ func NewRejectCommand(f client.Factory) *cobra.Command {
   oc oadp nabsl-request reject nacuser01-user-test-bsl-96dfa8b7-3f6f-4c8d-a168-8527b00fbed8 --reason "Bucket does not exist in specified region"`,
 		Run: func(c *cobra.Command, args []string) {
 			cmd.CheckError(o.Complete(args, f))
-			cmd.CheckError(o.Validate(c, args, f))
 			cmd.CheckError(o.Run(c, f))
 		},
 	}
@@ -82,10 +81,6 @@ func (o *RejectOptions) Complete(args []string, f client.Factory) error {
 	}
 
 	o.client = client
-	return nil
-}
-
-func (o *RejectOptions) Validate(c *cobra.Command, args []string, f client.Factory) error {
 	return nil
 }
 

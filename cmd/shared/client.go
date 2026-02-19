@@ -31,13 +31,13 @@ import (
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// ClientOptions holds configuration for creating Kubernetes clients
+// Configuration for creating Kubernetes clients
 type ClientOptions struct {
-	// IncludeNonAdminTypes adds OADP NonAdmin CRD types to the scheme
+	// OADP-NonAdmin CRD types
 	IncludeNonAdminTypes bool
-	// IncludeVeleroTypes adds Velero CRD types to the scheme
+	// Velero CRD types
 	IncludeVeleroTypes bool
-	// IncludeCoreTypes adds Kubernetes core types to the scheme
+	// Kubernetes core types
 	IncludeCoreTypes bool
 	// Timeout sets a timeout on the REST client configuration.
 	// This prevents the client from hanging indefinitely when the cluster is unreachable.
@@ -47,15 +47,22 @@ type ClientOptions struct {
 
 // NewClientWithScheme creates a controller-runtime client with the specified scheme types
 func NewClientWithScheme(f client.Factory, opts ClientOptions) (kbclient.WithWatch, error) {
+
+	// Create scheme with required types
+	scheme, err := NewSchemeWithTypes(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get REST config from factory
+	restConfig, err := f.ClientConfig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rest config: %w", err)
+	}
+
 	// If a timeout is specified, we need to create the client manually with the timeout
 	// applied to the REST config. Otherwise, use the factory's default method.
 	if opts.Timeout > 0 {
-		// Get REST config from factory
-		restConfig, err := f.ClientConfig()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get rest config: %w", err)
-		}
-
 		// Set timeout on REST config to prevent hanging when cluster is unreachable
 		restConfig.Timeout = opts.Timeout
 
@@ -67,45 +74,11 @@ func NewClientWithScheme(f client.Factory, opts ClientOptions) (kbclient.WithWat
 		restConfig.Dial = func(ctx context.Context, network, address string) (net.Conn, error) {
 			return dialer.DialContext(ctx, network, address)
 		}
-
-		// Create scheme with required types
-		scheme, err := NewSchemeWithTypes(opts)
-		if err != nil {
-			return nil, err
-		}
-
-		// Create client with the timeout-configured REST config
-		kbClient, err := kbclient.NewWithWatch(restConfig, kbclient.Options{Scheme: scheme})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create controller-runtime client: %w", err)
-		}
-
-		return kbClient, nil
 	}
 
-	// No timeout specified, use factory's default method
-	kbClient, err := f.KubebuilderWatchClient()
+	kbClient, err := kbclient.NewWithWatch(restConfig, kbclient.Options{Scheme: scheme})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create controller-runtime client: %w", err)
-	}
-
-	// Add schemes based on options
-	if opts.IncludeNonAdminTypes {
-		if err := nacv1alpha1.AddToScheme(kbClient.Scheme()); err != nil {
-			return nil, fmt.Errorf("failed to add OADP non-admin types to scheme: %w", err)
-		}
-	}
-
-	if opts.IncludeVeleroTypes {
-		if err := velerov1.AddToScheme(kbClient.Scheme()); err != nil {
-			return nil, fmt.Errorf("failed to add Velero types to scheme: %w", err)
-		}
-	}
-
-	if opts.IncludeCoreTypes {
-		if err := corev1.AddToScheme(kbClient.Scheme()); err != nil {
-			return nil, fmt.Errorf("failed to add Core types to scheme: %w", err)
-		}
 	}
 
 	return kbClient, nil

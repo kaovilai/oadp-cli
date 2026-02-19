@@ -87,12 +87,18 @@ func (o *DescribeOptions) Run(c *cobra.Command, f client.Factory) error {
 
 	// Get the request from openshift-adp namespace using the UUID
 	var request nacv1alpha1.NonAdminBackupStorageLocationRequest
-	err := o.client.Get(context.Background(), kbclient.ObjectKey{
-		Name:      o.UUID_Name,
+	requestName, err := shared.FindNABSLRequestByNameOrUUID(context.Background(), o.client, o.UUID_Name, adminNS)
+	if err != nil {
+		return err
+	}
+
+	err = o.client.Get(context.Background(), kbclient.ObjectKey{
+		Name:      requestName,
 		Namespace: adminNS,
 	}, &request)
+
 	if err != nil {
-		return fmt.Errorf("failed to get request for %q: %w", o.UUID_Name, err)
+		return fmt.Errorf("failed to get request for %q: %w", requestName, err)
 	}
 
 	return describeRequest(&request)

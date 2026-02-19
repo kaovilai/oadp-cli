@@ -99,12 +99,16 @@ func (o *GetOptions) Run(c *cobra.Command, f client.Factory) error {
 	if o.Name != "" {
 		// Get specific request by name (UUID)
 		var request nacv1alpha1.NonAdminBackupStorageLocationRequest
-		err := o.client.Get(context.Background(), kbclient.ObjectKey{
-			Name:      o.Name,
+		requestName, err := shared.FindNABSLRequestByNameOrUUID(context.Background(), o.client, o.Name, adminNS)
+		if err != nil {
+			return err
+		}
+		err = o.client.Get(context.Background(), kbclient.ObjectKey{
+			Name:      requestName,
 			Namespace: adminNS,
 		}, &request)
 		if err != nil {
-			return fmt.Errorf("failed to get request %q: %w", o.Name, err)
+			return fmt.Errorf("failed to get request %q: %w", requestName, err)
 		}
 
 		if printed, err := output.PrintWithFormat(c, &request); printed || err != nil {
