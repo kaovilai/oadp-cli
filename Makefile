@@ -96,6 +96,10 @@ build: ## Build the kubectl plugin binary (use PLATFORM=os/arch for cross-compil
 .PHONY: install
 install: build ## Build and install the kubectl plugin to ~/.local/bin (no sudo required)
 	@GOOS=$$(go env GOOS); \
+	if [ "$$GOOS" = "" ]; then \
+		echo "Error: GOOS is not set"; \
+		exit 1; \
+	fi; \
 	if [ "$$GOOS" = "windows" ]; then \
 		binary_name="$(BINARY_NAME).exe"; \
 	else \
