@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	nacv1alpha1 "github.com/migtools/oadp-non-admin/api/v1alpha1"
@@ -41,9 +42,11 @@ func FindNABSLRequestByNameOrUUID(ctx context.Context, client kbclient.WithWatch
 	}, &testRequest)
 	if err == nil {
 		return nameOrUUID, nil
+	} else if errors.IsNotFound(err) {
+		return "", fmt.Errorf("request for NABSL %q not found", nameOrUUID)
 	}
 
-	// Match NABSL name to UUID
+	// Fallback:Match NABSL name to UUID
 	var requestList nacv1alpha1.NonAdminBackupStorageLocationRequestList
 	err = client.List(ctx, &requestList, kbclient.InNamespace(adminNamespace))
 	if err != nil {
