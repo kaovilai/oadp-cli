@@ -46,7 +46,6 @@ func NewApproveCommand(f client.Factory) *cobra.Command {
   oc oadp nabsl-request approve nacuser01-user-test-bsl-96dfa8b7-3f6f-4c8d-a168-8527b00fbed8 --reason "Approved for production use"`,
 		Run: func(c *cobra.Command, args []string) {
 			cmd.CheckError(o.Complete(args, f))
-			cmd.CheckError(o.Validate(c, args, f))
 			cmd.CheckError(o.Run(c, f))
 		},
 	}
@@ -85,21 +84,15 @@ func (o *ApproveOptions) Complete(args []string, f client.Factory) error {
 	return nil
 }
 
-func (o *ApproveOptions) Validate(c *cobra.Command, args []string, f client.Factory) error {
-	return nil
-}
-
 func (o *ApproveOptions) Run(c *cobra.Command, f client.Factory) error {
-	// Get the admin namespace (from client config) where requests are stored
+
 	adminNS := f.Namespace()
 
-	// Find the request either by UUID or by looking up NABSL name
 	requestName, err := shared.FindNABSLRequestByNameOrUUID(context.Background(), o.client, o.RequestName, adminNS)
 	if err != nil {
 		return err
 	}
 
-	// Get the current request
 	var request nacv1alpha1.NonAdminBackupStorageLocationRequest
 	err = o.client.Get(context.Background(), kbclient.ObjectKey{
 		Name:      requestName,

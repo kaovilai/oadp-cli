@@ -44,16 +44,12 @@ import (
 
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/backup"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/backuplocation"
-	"github.com/vmware-tanzu/velero/pkg/cmd/cli/bug"
 	cliclient "github.com/vmware-tanzu/velero/pkg/cmd/cli/client"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/create"
-	"github.com/vmware-tanzu/velero/pkg/cmd/cli/datamover"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/debug"
 	veldelete "github.com/vmware-tanzu/velero/pkg/cmd/cli/delete"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/describe"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/get"
-	"github.com/vmware-tanzu/velero/pkg/cmd/cli/repo"
-	"github.com/vmware-tanzu/velero/pkg/cmd/cli/repomantenance"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/restore"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/schedule"
 	"github.com/vmware-tanzu/velero/pkg/cmd/cli/snapshotlocation"
@@ -425,7 +421,7 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	f := &timeoutFactory{Factory: baseFactory}
 
 	// Bind factory flags to enable -n/--namespace flag for admin commands.
-	// This allows admin Velero and NABSL commands to accept namespace via CLI flag.
+	// This allows admin Velero and NABSL-request commands to accept namespace via CLI flag.
 	// Nonadmin commands continue using GetCurrentNamespace() for security isolation.
 	f.BindFlags(c.PersistentFlags())
 
@@ -440,13 +436,9 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 		veldelete.NewCommand(f),
 		cliclient.NewCommand(),
 		completion.NewCommand(),
-		repo.NewCommand(f),
-		bug.NewCommand(),
 		backuplocation.NewCommand(f),
 		snapshotlocation.NewCommand(f),
 		debug.NewCommand(f),
-		repomantenance.NewCommand(f),
-		datamover.NewCommand(f),
 	)
 
 	// Admin NABSL request commands - use Velero factory (admin namespace)
