@@ -144,16 +144,9 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 func (o *CreateOptions) Complete(args []string, f client.Factory) error {
 	o.Name = args[0]
 
-	// Load default storage location from config if not provided via flag
-	if o.StorageLocation == "" {
-		clientConfig, err := shared.ReadVeleroClientConfig()
-		if err == nil && clientConfig != nil {
-			defaultNABSL := clientConfig.GetDefaultNABSL()
-			if defaultNABSL != "" {
-				o.StorageLocation = defaultNABSL
-			}
-		}
-		// Silently ignore config read errors - validation will catch missing storage location
+	defaultNABSL := getNABSLFromConfig()
+	if defaultNABSL != "" {
+		o.StorageLocation = defaultNABSL
 	}
 
 	// Create client with NonAdmin scheme
@@ -190,8 +183,12 @@ func (o *CreateOptions) Run(c *cobra.Command, f client.Factory) error {
 		return err
 	}
 
+	if defaultNABSL := getNABSLFromConfig(); defaultNABSL != "" {
+		fmt.Printf("Using default storage location from config: %s\n", defaultNABSL)
+	}
 	fmt.Printf("NonAdminBackup request %q submitted successfully.\n", nonAdminBackup.Name)
 	fmt.Printf("Run `oc oadp nonadmin backup describe %s` or `oc oadp nonadmin backup logs %s` for more details.\n", nonAdminBackup.Name, nonAdminBackup.Name)
+
 	return nil
 }
 
@@ -251,4 +248,15 @@ func (o *CreateOptions) createNonAdminBackup(namespace string, backupSpec *veler
 			BackupSpec: backupSpec,
 		}).
 		Result()
+}
+
+func getNABSLFromConfig() string {
+	clientConfig, err := shared.ReadVeleroClientConfig()
+	if err == nil && clientConfig != nil {
+		defaultNABSL := clientConfig.GetDefaultNABSL()
+		if defaultNABSL != "" {
+			return defaultNABSL
+		}
+	}
+	return ""
 }
