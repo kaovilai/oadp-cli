@@ -61,6 +61,9 @@ func NewCreateCommand(f client.Factory, use string) *cobra.Command {
   # Create a backup with specific storage location.
   oc oadp nonadmin backup create backup5 --storage-location my-nabsl
 
+  # Set default storage location for all backups.
+  oc oadp client config set default-nabsl=my-nabsl
+
   # View the YAML for a backup without sending it to the server.
   oc oadp nonadmin backup create backup6 -o yaml`,
 	}
@@ -102,7 +105,7 @@ func (o *CreateOptions) BindFlags(flags *pflag.FlagSet) {
 
 	// Timing/Storage (MVP)
 	flags.DurationVar(&o.TTL, "ttl", o.TTL, "How long before the backup can be garbage collected.")
-	flags.StringVar(&o.StorageLocation, "storage-location", "", "Location in which to store the backup.")
+	flags.StringVar(&o.StorageLocation, "storage-location", "", "Location in which to store the backup. Uses config 'default-nabsl' if not specified.")
 	flags.DurationVar(&o.CSISnapshotTimeout, "csi-snapshot-timeout", o.CSISnapshotTimeout, "How long to wait for CSI snapshot creation before timeout.")
 	flags.DurationVar(&o.ItemOperationTimeout, "item-operation-timeout", o.ItemOperationTimeout, "How long to wait for async plugin operations before timeout.")
 
@@ -132,7 +135,7 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 
 	// Storage location validation
 	if o.StorageLocation == "" {
-		return fmt.Errorf("--storage-location is required")
+		return fmt.Errorf("--storage-location is required (can be set via flag or config 'default-nabsl')")
 	}
 
 	return nil
@@ -140,6 +143,18 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 
 func (o *CreateOptions) Complete(args []string, f client.Factory) error {
 	o.Name = args[0]
+
+	// Load default storage location from config if not provided via flag
+	if o.StorageLocation == "" {
+		clientConfig, err := shared.ReadVeleroClientConfig()
+		if err == nil && clientConfig != nil {
+			defaultNABSL := clientConfig.GetDefaultNABSL()
+			if defaultNABSL != "" {
+				o.StorageLocation = defaultNABSL
+			}
+		}
+		// Silently ignore config read errors - validation will catch missing storage location
+	}
 
 	// Create client with NonAdmin scheme
 	client, err := shared.NewClientWithScheme(f, shared.ClientOptions{
