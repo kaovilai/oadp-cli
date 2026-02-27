@@ -79,9 +79,10 @@ type CreateOptions struct {
 	*velerobackup.CreateOptions // Embed Velero's CreateOptions
 
 	// NAB-specific fields
-	Name             string // The NonAdminBackup resource name (maps to Velero's BackupName)
-	client           kbclient.WithWatch
-	currentNamespace string
+	Name                      string // The NonAdminBackup resource name (maps to Velero's BackupName)
+	client                    kbclient.WithWatch
+	currentNamespace          string
+	storageLocationFromConfig bool // Track if storage location came from config
 }
 
 func NewCreateOptions() *CreateOptions {
@@ -144,9 +145,13 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 func (o *CreateOptions) Complete(args []string, f client.Factory) error {
 	o.Name = args[0]
 
-	defaultNABSL := getNABSLFromConfig()
-	if defaultNABSL != "" {
-		o.StorageLocation = defaultNABSL
+	// Load default NABSL from config if not provided via flag
+	if o.StorageLocation == "" {
+		defaultNABSL := getNABSLFromConfig()
+		if defaultNABSL != "" {
+			o.StorageLocation = defaultNABSL
+			o.storageLocationFromConfig = true
+		}
 	}
 
 	// Create client with NonAdmin scheme
@@ -183,8 +188,8 @@ func (o *CreateOptions) Run(c *cobra.Command, f client.Factory) error {
 		return err
 	}
 
-	if defaultNABSL := getNABSLFromConfig(); defaultNABSL != "" {
-		fmt.Printf("Using default nonadmin backup storage location from config: %s\n", defaultNABSL)
+	if o.storageLocationFromConfig {
+		fmt.Printf("Using default nonadmin backup storage location from config: %s\n", o.StorageLocation)
 	}
 
 	fmt.Printf("NonAdminBackup request %q submitted successfully.\n", nonAdminBackup.Name)
