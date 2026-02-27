@@ -186,8 +186,10 @@ func (o *CreateOptions) Run(c *cobra.Command, f client.Factory) error {
 	if defaultNABSL := getNABSLFromConfig(); defaultNABSL != "" {
 		fmt.Printf("Using default storage location from config: %s\n", defaultNABSL)
 	}
+
 	fmt.Printf("NonAdminBackup request %q submitted successfully.\n", nonAdminBackup.Name)
 	fmt.Printf("Run `oc oadp nonadmin backup describe %s` or `oc oadp nonadmin backup logs %s` for more details.\n", nonAdminBackup.Name, nonAdminBackup.Name)
+	fmt.Println()
 
 	return nil
 }
