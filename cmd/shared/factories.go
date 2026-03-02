@@ -28,8 +28,9 @@ import (
 
 // ClientConfig represents the structure of the Velero client configuration file
 type ClientConfig struct {
-	Namespace string      `json:"namespace"`
-	NonAdmin  interface{} `json:"nonadmin,omitempty"`
+	Namespace    string      `json:"namespace"`
+	NonAdmin     interface{} `json:"nonadmin,omitempty"`
+	DefaultNABSL string      `json:"default-nabsl,omitempty"`
 }
 
 // IsNonAdmin returns true if the nonadmin configuration is enabled.
@@ -47,6 +48,15 @@ func (c *ClientConfig) IsNonAdmin() bool {
 	default:
 		return false
 	}
+}
+
+// GetDefaultNABSL returns the default NonAdminBackupStorageLocation if set.
+// Returns empty string if not configured.
+func (c *ClientConfig) GetDefaultNABSL() string {
+	if c == nil {
+		return ""
+	}
+	return c.DefaultNABSL
 }
 
 // CreateVeleroFactory creates a client factory for Velero operations (admin-scoped)

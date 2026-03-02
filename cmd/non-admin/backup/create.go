@@ -61,6 +61,9 @@ func NewCreateCommand(f client.Factory, use string) *cobra.Command {
   # Create a backup with specific storage location.
   oc oadp nonadmin backup create backup5 --storage-location my-nabsl
 
+  # Set default storage location for all backups.
+  oc oadp client config set default-nabsl=my-nabsl
+
   # View the YAML for a backup without sending it to the server.
   oc oadp nonadmin backup create backup6 -o yaml`,
 	}
@@ -76,9 +79,10 @@ type CreateOptions struct {
 	*velerobackup.CreateOptions // Embed Velero's CreateOptions
 
 	// NAB-specific fields
-	Name             string // The NonAdminBackup resource name (maps to Velero's BackupName)
-	client           kbclient.WithWatch
-	currentNamespace string
+	Name                      string // The NonAdminBackup resource name (maps to Velero's BackupName)
+	client                    kbclient.WithWatch
+	currentNamespace          string
+	storageLocationFromConfig bool // Track if storage location came from config
 }
 
 func NewCreateOptions() *CreateOptions {
@@ -102,7 +106,7 @@ func (o *CreateOptions) BindFlags(flags *pflag.FlagSet) {
 
 	// Timing/Storage (MVP)
 	flags.DurationVar(&o.TTL, "ttl", o.TTL, "How long before the backup can be garbage collected.")
-	flags.StringVar(&o.StorageLocation, "storage-location", "", "Location in which to store the backup.")
+	flags.StringVar(&o.StorageLocation, "storage-location", "", "Location in which to store the backup. Uses config 'default-nabsl' if not specified.")
 	flags.DurationVar(&o.CSISnapshotTimeout, "csi-snapshot-timeout", o.CSISnapshotTimeout, "How long to wait for CSI snapshot creation before timeout.")
 	flags.DurationVar(&o.ItemOperationTimeout, "item-operation-timeout", o.ItemOperationTimeout, "How long to wait for async plugin operations before timeout.")
 
@@ -132,7 +136,9 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 
 	// Storage location validation
 	if o.StorageLocation == "" {
-		return fmt.Errorf("--storage-location is required")
+		return fmt.Errorf("--storage-location is required\n" +
+			"To avoid specifying the storage location each time:\n" +
+			"run `oc oadp client config set default-nabsl=<NABSL_NAME>` to set the default storage location")
 	}
 
 	return nil
@@ -140,6 +146,15 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 
 func (o *CreateOptions) Complete(args []string, f client.Factory) error {
 	o.Name = args[0]
+
+	// Load default NABSL from config if not provided via flag
+	if o.StorageLocation == "" {
+		defaultNABSL := getNABSLFromConfig()
+		if defaultNABSL != "" {
+			o.StorageLocation = defaultNABSL
+			o.storageLocationFromConfig = true
+		}
+	}
 
 	// Create client with NonAdmin scheme
 	client, err := shared.NewClientWithScheme(f, shared.ClientOptions{
@@ -175,8 +190,14 @@ func (o *CreateOptions) Run(c *cobra.Command, f client.Factory) error {
 		return err
 	}
 
+	if o.storageLocationFromConfig {
+		fmt.Printf("Using default nonadmin backup storage location from config: %s\n", o.StorageLocation)
+	}
+
 	fmt.Printf("NonAdminBackup request %q submitted successfully.\n", nonAdminBackup.Name)
 	fmt.Printf("Run `oc oadp nonadmin backup describe %s` or `oc oadp nonadmin backup logs %s` for more details.\n", nonAdminBackup.Name, nonAdminBackup.Name)
+	fmt.Println()
+
 	return nil
 }
 
@@ -236,4 +257,15 @@ func (o *CreateOptions) createNonAdminBackup(namespace string, backupSpec *veler
 			BackupSpec: backupSpec,
 		}).
 		Result()
+}
+
+func getNABSLFromConfig() string {
+	clientConfig, err := shared.ReadVeleroClientConfig()
+	if err == nil && clientConfig != nil {
+		defaultNABSL := clientConfig.GetDefaultNABSL()
+		if defaultNABSL != "" {
+			return defaultNABSL
+		}
+	}
+	return ""
 }
