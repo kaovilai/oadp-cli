@@ -136,7 +136,9 @@ func (o *CreateOptions) Validate(c *cobra.Command, args []string, f client.Facto
 
 	// Storage location validation
 	if o.StorageLocation == "" {
-		return fmt.Errorf("--storage-location is required (can be set via flag or config 'default-nabsl')")
+		return fmt.Errorf("--storage-location is required\n" +
+			"To avoid specifying the storage location each time:\n" +
+			"run `oc oadp client config set default-nabsl=<NABSL_NAME>` to set the default storage location")
 	}
 
 	return nil
