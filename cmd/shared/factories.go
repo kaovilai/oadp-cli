@@ -28,9 +28,10 @@ import (
 
 // ClientConfig represents the structure of the Velero client configuration file
 type ClientConfig struct {
-	Namespace    string      `json:"namespace"`
-	NonAdmin     interface{} `json:"nonadmin,omitempty"`
-	DefaultNABSL string      `json:"default-nabsl,omitempty"`
+	Namespace     string      `json:"namespace"`
+	NonAdmin      interface{} `json:"nonadmin,omitempty"`
+	DefaultNABSL  string      `json:"default-nabsl,omitempty"`
+	OADPNamespace string      `json:"oadp_namespace,omitempty"`
 }
 
 // IsNonAdmin returns true if the nonadmin configuration is enabled.
@@ -111,4 +112,32 @@ func ReadVeleroClientConfig() (*ClientConfig, error) {
 	}
 
 	return &config, nil
+}
+
+// WriteVeleroClientConfig writes the client configuration to ~/.config/velero/config.json
+func WriteVeleroClientConfig(config *ClientConfig) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	configPath := filepath.Join(homeDir, ".config", "velero", "config.json")
+
+	// Ensure directory exists
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Marshal to JSON with indentation
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	// Write to file
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
+	}
+
+	return nil
 }
