@@ -153,7 +153,7 @@ func (o *SetupOptions) Run(c *cobra.Command, f client.Factory) error {
 	}
 
 	// Print success message
-	o.printSetupSuccess(config)
+	o.printSetupSuccess()
 
 	return nil
 }
@@ -175,7 +175,7 @@ func (o *SetupOptions) printCurrentConfig(config *shared.ClientConfig) {
 }
 
 // printSetupSuccess prints a success message after setup
-func (o *SetupOptions) printSetupSuccess(config *shared.ClientConfig) {
+func (o *SetupOptions) printSetupSuccess() {
 	homeDir, _ := os.UserHomeDir()
 	configPath := filepath.Join(homeDir, ".config", "velero", "config.json")
 
