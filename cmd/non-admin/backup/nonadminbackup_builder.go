@@ -44,8 +44,8 @@ type NonAdminBackupBuilder struct {
 	object *nacv1alpha1.NonAdminBackup
 }
 
-// ForNonAdminBackup is the constructor for a NonAdminBackupBuilder.
-func ForNonAdminBackup(ns, name string) *NonAdminBackupBuilder {
+// NewNonAdminBackupBuilder is the constructor for a NonAdminBackupBuilder.
+func NewNonAdminBackupBuilder(namespace, name string) *NonAdminBackupBuilder {
 	return &NonAdminBackupBuilder{
 		object: &nacv1alpha1.NonAdminBackup{
 			TypeMeta: metav1.TypeMeta{
@@ -53,7 +53,7 @@ func ForNonAdminBackup(ns, name string) *NonAdminBackupBuilder {
 				Kind:       "NonAdminBackup",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: ns,
+				Namespace: namespace,
 				Name:      name,
 			},
 		},

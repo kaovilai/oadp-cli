@@ -26,7 +26,7 @@ import (
 
 Example usage:
 
-var nonAdminRestore = builder.ForNonAdminRestore("user-namespace", "restore-1").
+var nonAdminRestore = builder.NewNonAdminRestoreBuilder("user-namespace", "restore-1").
 	ObjectMeta(
 		builder.WithLabels("foo", "bar"),
 	).
@@ -44,10 +44,10 @@ type NonAdminRestoreBuilder struct {
 	object *nacv1alpha1.NonAdminRestore
 }
 
-// ForNonAdminRestore is the constructor for a NonAdminRestoreBuilder.
-func ForNonAdminRestore(ns, name string) *NonAdminRestoreBuilder {
+// NewNonAdminRestoreBuilder is the constructor for a NonAdminRestoreBuilder.
+func NewNonAdminRestoreBuilder(namespace, name string) *NonAdminRestoreBuilder {
 	objMeta := metav1.ObjectMeta{
-		Namespace: ns,
+		Namespace: namespace,
 	}
 
 	// If name is empty, use GenerateName for auto-generation

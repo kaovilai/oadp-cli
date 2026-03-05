@@ -252,7 +252,7 @@ func (o *CreateOptions) applyOptionalBackupOptions(backupBuilder *builder.Backup
 
 // createNonAdminBackup creates the NonAdminBackup CR from a BackupSpec
 func (o *CreateOptions) createNonAdminBackup(namespace string, backupSpec *velerov1api.BackupSpec) *nacv1alpha1.NonAdminBackup {
-	return ForNonAdminBackup(namespace, o.Name).
+	return NewNonAdminBackupBuilder(namespace, o.Name).
 		BackupSpec(nacv1alpha1.NonAdminBackupSpec{
 			BackupSpec: backupSpec,
 		}).
