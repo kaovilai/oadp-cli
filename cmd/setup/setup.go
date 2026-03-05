@@ -189,6 +189,7 @@ func (o *SetupOptions) printSetupSuccess(config *shared.ClientConfig) {
 		fmt.Println("  oc oadp backup create my-backup")
 		fmt.Println("  oc oadp restore create my-restore")
 	} else {
+		fmt.Println("✗ OADP controller deployment not accessible.")
 		fmt.Println("✓ Non-admin mode enabled")
 		fmt.Println()
 		fmt.Printf("Configuration saved to: %s\n", configPath)
