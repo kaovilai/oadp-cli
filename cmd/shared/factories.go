@@ -113,22 +113,60 @@ func ReadVeleroClientConfig() (*ClientConfig, error) {
 	return &config, nil
 }
 
-// WriteVeleroClientConfig writes the client configuration to ~/.config/velero/config.json
-func WriteVeleroClientConfig(config *ClientConfig) error {
+// getVeleroConfigPath returns the path to the Velero client config file
+func getVeleroConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("failed to get user home directory: %w", err)
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+	return filepath.Join(homeDir, ".config", "velero", "config.json"), nil
+}
+
+// readConfigMap reads the existing config file as a map, or returns an empty map if it doesn't exist
+func readConfigMap(configPath string) (map[string]interface{}, error) {
+	configMap := make(map[string]interface{})
+
+	existingData, err := os.ReadFile(configPath)
+	if err == nil {
+		// File exists, unmarshal it
+		if err := json.Unmarshal(existingData, &configMap); err != nil {
+			return nil, fmt.Errorf("failed to parse existing config: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		// Error other than file not existing
+		return nil, fmt.Errorf("failed to read existing config: %w", err)
+	}
+	// If file doesn't exist, configMap remains empty
+
+	return configMap, nil
+}
+
+// mergeClientConfig merges the ClientConfig into the config map, updating only managed keys
+func mergeClientConfig(configMap map[string]interface{}, config *ClientConfig) {
+	configMap["namespace"] = config.Namespace
+
+	if config.NonAdmin != nil {
+		configMap["nonadmin"] = config.NonAdmin
+	} else {
+		delete(configMap, "nonadmin")
 	}
 
-	configPath := filepath.Join(homeDir, ".config", "velero", "config.json")
+	if config.DefaultNABSL != "" {
+		configMap["default-nabsl"] = config.DefaultNABSL
+	} else {
+		delete(configMap, "default-nabsl")
+	}
+}
 
+// writeConfigMap writes the config map to the specified path
+func writeConfigMap(configPath string, configMap map[string]interface{}) error {
 	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
 	// Marshal to JSON with indentation
-	data, err := json.MarshalIndent(config, "", "  ")
+	data, err := json.MarshalIndent(configMap, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
@@ -139,4 +177,23 @@ func WriteVeleroClientConfig(config *ClientConfig) error {
 	}
 
 	return nil
+}
+
+// WriteVeleroClientConfig writes the client configuration to ~/.config/velero/config.json
+// It merges only the keys managed by this CLI (namespace, nonadmin, default-nabsl)
+// with the existing config file, preserving any other Velero configuration keys.
+func WriteVeleroClientConfig(config *ClientConfig) error {
+	configPath, err := getVeleroConfigPath()
+	if err != nil {
+		return err
+	}
+
+	configMap, err := readConfigMap(configPath)
+	if err != nil {
+		return err
+	}
+
+	mergeClientConfig(configMap, config)
+
+	return writeConfigMap(configPath, configMap)
 }
