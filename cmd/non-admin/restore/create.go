@@ -187,7 +187,7 @@ func (o *CreateOptions) BuildNonAdminRestore(namespace string) (*nacv1alpha1.Non
 	tempRestore := restoreBuilder.Result()
 
 	// Wrap in NonAdminRestore
-	return ForNonAdminRestore(namespace, o.Name).
+	return NewNonAdminRestoreBuilder(namespace, o.Name).
 		RestoreSpec(nacv1alpha1.NonAdminRestoreSpec{
 			RestoreSpec: &tempRestore.Spec,
 		}).

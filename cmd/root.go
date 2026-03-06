@@ -32,6 +32,7 @@ import (
 	mustgather "github.com/migtools/oadp-cli/cmd/must-gather"
 	"github.com/migtools/oadp-cli/cmd/nabsl-request"
 	nonadmin "github.com/migtools/oadp-cli/cmd/non-admin"
+	"github.com/migtools/oadp-cli/cmd/setup"
 	"github.com/spf13/cobra"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	clientcmd "github.com/vmware-tanzu/velero/pkg/client"
@@ -450,11 +451,14 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	// Must-gather command - diagnostic tool
 	c.AddCommand(mustgather.NewMustGatherCommand(f))
 
+	// Setup command - auto-detect and configure admin vs non-admin mode
+	c.AddCommand(setup.NewSetupCommand(f))
+
 	// Apply velero->oadp replacement to all commands recursively
 	// Skip nonadmin commands since we have full control over their output
 	for _, cmd := range c.Commands() {
 		// Don't wrap nonadmin commands - we control them and they already use correct terminology
-		if cmd.Use == "nonadmin" || cmd.Use == "nabsl-request" || cmd.Use == "must-gather" {
+		if cmd.Use == "nonadmin" || cmd.Use == "nabsl-request" || cmd.Use == "must-gather" || cmd.Use == "setup" {
 			continue
 		}
 		replaceVeleroWithOADP(cmd)
@@ -472,6 +476,7 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 			"nonadmin":   true,
 			"client":     true,
 			"completion": true,
+			"setup":      true,
 		}
 		for _, cmd := range c.Commands() {
 			if !allowedCmds[cmd.Use] {
