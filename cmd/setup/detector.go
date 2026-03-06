@@ -17,56 +17,52 @@ limitations under the License.
 package setup
 
 import (
-	"context"
 	"fmt"
-
-	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	kbclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"os/exec"
+	"strings"
 )
 
-// DetectionResult holds the result of detecting user mode and OADP installation
+// DetectionResult holds the result of detecting user mode
 type DetectionResult struct {
-	IsAdmin       bool
-	OADPNamespace string
-	Error         error
+	IsAdmin bool
+	Error   error
 }
 
-// detectUserMode detects whether the user has admin permissions and finds the OADP namespace.
-// It does this by attempting to list deployments across all namespaces and looking for
-// "openshift-adp-controller-manager". Admin users can see resources across all namespaces,
-// while non-admin users cannot.
-func detectUserMode(ctx context.Context, client kbclient.Client) DetectionResult {
-	deployments := &appsv1.DeploymentList{}
-
-	// Attempt to list all deployments across all namespaces.
-	// This will fail with permission denied for non-admin users.
-	err := client.List(ctx, deployments)
+// detectUserMode detects whether the user has admin permissions by checking
+// if they can create Velero Backup resources across all namespaces.
+// Admin users can create backups.velero.io cluster-wide, while non-admin users
+// can only create nonadminbackups.oadp.openshift.io in their own namespace.
+func detectUserMode() DetectionResult {
+	// Check if user can create Velero Backups across all namespaces
+	// This is the core permission difference between admin and non-admin modes
+	cmd := exec.Command("oc", "auth", "can-i", "create", "backups.velero.io", "--all-namespaces")
+	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		// Check if not logged in - this is a fatal error
-		if errors.IsUnauthorized(err) {
-			return DetectionResult{Error: fmt.Errorf("not logged in to cluster: %w", err)}
-		}
-		// Check if permission denied - indicates non-admin user
-		if errors.IsForbidden(err) {
-			return DetectionResult{IsAdmin: false}
-		}
-		// Other errors (cluster unreachable, etc.)
-		return DetectionResult{Error: fmt.Errorf("failed to query cluster: %w", err)}
-	}
-
-	// Filter deployments to find OADP controller
-	for _, deployment := range deployments.Items {
-		if deployment.Name == "openshift-adp-controller-manager" {
-			// Found OADP controller - user is admin
-			return DetectionResult{
-				IsAdmin:       true,
-				OADPNamespace: deployment.Namespace,
+		// Check if this is because oc command failed vs permission check
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			// Exit code 1 typically means "no" for can-i
+			if exitErr.ExitCode() == 1 {
+				return DetectionResult{IsAdmin: false}
 			}
 		}
+		// Check if output indicates not logged in
+		outputStr := string(output)
+		if strings.Contains(outputStr, "Unauthorized") || strings.Contains(outputStr, "not logged in") {
+			return DetectionResult{Error: fmt.Errorf("not logged in to cluster")}
+		}
+		// Other errors (oc not found, cluster unreachable, etc.)
+		return DetectionResult{Error: fmt.Errorf("failed to check permissions: %w", err)}
 	}
 
-	// OADP not installed - default to non-admin
+	// Parse the output
+	result := strings.TrimSpace(string(output))
+
+	// "yes" means user can create backups cluster-wide (admin mode)
+	if result == "yes" {
+		return DetectionResult{IsAdmin: true}
+	}
+
+	// "no" means user cannot (non-admin mode)
 	return DetectionResult{IsAdmin: false}
 }

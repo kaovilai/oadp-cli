@@ -28,10 +28,9 @@ import (
 
 // ClientConfig represents the structure of the Velero client configuration file
 type ClientConfig struct {
-	Namespace     string      `json:"namespace"`
-	NonAdmin      interface{} `json:"nonadmin,omitempty"`
-	DefaultNABSL  string      `json:"default-nabsl,omitempty"`
-	OADPNamespace string      `json:"oadp_namespace,omitempty"`
+	Namespace    string      `json:"namespace"`
+	NonAdmin     interface{} `json:"nonadmin,omitempty"`
+	DefaultNABSL string      `json:"default-nabsl,omitempty"`
 }
 
 // IsNonAdmin returns true if the nonadmin configuration is enabled.
