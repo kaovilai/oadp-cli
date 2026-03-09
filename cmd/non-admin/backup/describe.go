@@ -299,10 +299,10 @@ func printNonAdminBackupDetails(cmd *cobra.Command, nab *nacv1alpha1.NonAdminBac
 
 		// Started and Completed times
 		if !status.StartTimestamp.IsZero() {
-			fmt.Fprintf(out, "Started:    %s\n", status.StartTimestamp.Time.Format("2006-01-02 15:04:05 -0700 MST"))
+			fmt.Fprintf(out, "Started:    %s\n", status.StartTimestamp.Format("2006-01-02 15:04:05 -0700 MST"))
 		}
 		if !status.CompletionTimestamp.IsZero() {
-			fmt.Fprintf(out, "Completed:  %s\n", status.CompletionTimestamp.Time.Format("2006-01-02 15:04:05 -0700 MST"))
+			fmt.Fprintf(out, "Completed:  %s\n", status.CompletionTimestamp.Format("2006-01-02 15:04:05 -0700 MST"))
 		}
 
 		fmt.Fprintf(out, "\n")
@@ -511,9 +511,9 @@ func formatResourceList(resourceList string) string {
 	var output strings.Builder
 	for _, gvk := range keys {
 		items := resources[gvk]
-		output.WriteString(fmt.Sprintf("  %s:\n", gvk))
+		fmt.Fprintf(&output, "  %s:\n", gvk)
 		for _, item := range items {
-			output.WriteString(fmt.Sprintf("    - %s\n", item))
+			fmt.Fprintf(&output, "    - %s\n", item)
 		}
 	}
 

@@ -358,23 +358,10 @@ $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
 # Tool versions
-GOLANGCI_LINT_VERSION ?= v1.63.4
+GOLANGCI_LINT_VERSION ?= v2.11.0
 
 # Tool binaries
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
-
-# go-install-tool will 'go install' any package $2 and install it to $1.
-define go-install-tool
-[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(LOCALBIN) go install $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
 
 # golangci-lint installation
 .PHONY: golangci-lint
@@ -384,7 +371,7 @@ $(GOLANGCI_LINT): $(LOCALBIN)
 		echo "golangci-lint $(GOLANGCI_LINT_VERSION) is already installed"; \
 	else \
 		echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)"; \
-		$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)); \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(LOCALBIN) $(GOLANGCI_LINT_VERSION); \
 	fi
 
 # Testing targets

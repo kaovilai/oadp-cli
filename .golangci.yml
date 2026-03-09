@@ -1,0 +1,9 @@
+version: 2
+
+linters:
+  disable:
+    - errcheck  # Disabled for CLI tool - output errors are typically unrecoverable
+
+run:
+  timeout: 5m
+  go: "1.25"

@@ -149,7 +149,7 @@ func getRestoreDuration(nar *nacv1alpha1.NonAdminRestore) string {
 	if nar.Status.VeleroRestore != nil && nar.Status.VeleroRestore.Status != nil {
 		if !nar.Status.VeleroRestore.Status.CompletionTimestamp.IsZero() {
 			// Calculate duration from request creation to completion
-			duration := nar.Status.VeleroRestore.Status.CompletionTimestamp.Time.Sub(nar.CreationTimestamp.Time)
+			duration := nar.Status.VeleroRestore.Status.CompletionTimestamp.Sub(nar.CreationTimestamp.Time)
 			return formatDuration(duration)
 		}
 	}
