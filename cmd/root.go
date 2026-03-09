@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/migtools/oadp-cli/cmd/completion"
 	mustgather "github.com/migtools/oadp-cli/cmd/must-gather"
 	"github.com/migtools/oadp-cli/cmd/nabsl-request"
 	nonadmin "github.com/migtools/oadp-cli/cmd/non-admin"
@@ -59,7 +60,6 @@ import (
 	veleroflag "github.com/vmware-tanzu/velero/pkg/cmd/util/flag"
 	"github.com/vmware-tanzu/velero/pkg/features"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/kustomize/cmd/config/completion"
 )
 
 // globalRequestTimeout holds the request timeout value set by --request-timeout flag.
@@ -458,7 +458,8 @@ func NewVeleroRootCommand(baseName string) *cobra.Command {
 	// Skip nonadmin commands since we have full control over their output
 	for _, cmd := range c.Commands() {
 		// Don't wrap nonadmin commands - we control them and they already use correct terminology
-		if cmd.Use == "nonadmin" || cmd.Use == "nabsl-request" || cmd.Use == "must-gather" || cmd.Use == "setup" {
+		// Don't wrap completion - it needs direct stdout access for shell completion generation
+		if cmd.Use == "nonadmin" || cmd.Use == "nabsl-request" || cmd.Use == "must-gather" || cmd.Use == "setup" || strings.HasPrefix(cmd.Use, "completion") {
 			continue
 		}
 		replaceVeleroWithOADP(cmd)
