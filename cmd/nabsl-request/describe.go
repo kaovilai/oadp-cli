@@ -181,7 +181,7 @@ func describeRequest(request *nacv1alpha1.NonAdminBackupStorageLocationRequest) 
 	}
 
 	// Creation Timestamp
-	fmt.Printf("Creation Timestamp:  %s\n", request.CreationTimestamp.Time.Format("2006-01-02 15:04:05 -0700 MST"))
+	fmt.Printf("Creation Timestamp:  %s\n", request.CreationTimestamp.Format("2006-01-02 15:04:05 -0700 MST"))
 
 	return nil
 }

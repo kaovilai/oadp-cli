@@ -149,7 +149,7 @@ func getBackupDuration(nab *nacv1alpha1.NonAdminBackup) string {
 	if nab.Status.VeleroBackup != nil && nab.Status.VeleroBackup.Status != nil {
 		if !nab.Status.VeleroBackup.Status.CompletionTimestamp.IsZero() {
 			// Calculate duration from request creation to completion
-			duration := nab.Status.VeleroBackup.Status.CompletionTimestamp.Time.Sub(nab.CreationTimestamp.Time)
+			duration := nab.Status.VeleroBackup.Status.CompletionTimestamp.Sub(nab.CreationTimestamp.Time)
 			return formatDuration(duration)
 		}
 	}
