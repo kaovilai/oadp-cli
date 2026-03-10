@@ -147,11 +147,13 @@ func (o *InstallOptions) Run(c *cobra.Command) error {
 
 // isBashCompletionInstalled checks if bash-completion is available
 func (o *InstallOptions) isBashCompletionInstalled() bool {
-	// Check common bash-completion paths
+	// Check common bash-completion paths across Linux distros and macOS
 	paths := []string{
+		"/usr/share/bash-completion/bash_completion",
+		"/etc/bash_completion",
+		"/etc/profile.d/bash_completion.sh",
 		"/opt/homebrew/etc/bash_completion",
 		"/usr/local/etc/bash_completion",
-		"/etc/bash_completion",
 	}
 
 	for _, path := range paths {
