@@ -713,7 +713,6 @@ $ oc oadp nonadmin backup create <backup_name> [flags]
 | `--exclude-resources` | Resources to exclude from the backup, formatted as `resource.group`. |
 | `--selector` / `-l` | Only back up resources matching this label selector. |
 | `--or-selector` | Back up resources matching at least one of the label selectors, separated by ` or `. |
-| `--include-cluster-resources` | Include cluster-scoped resources. Non-admin users can only set this to `false`. |
 | `--ttl` | How long before the backup can be garbage collected. Default: `720h`. |
 | `--csi-snapshot-timeout` | Timeout for CSI snapshot creation. |
 | `--item-operation-timeout` | Timeout for asynchronous plugin operations. |
