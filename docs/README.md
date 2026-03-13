@@ -164,8 +164,8 @@ $ oc oadp backup create <backup_name> [flags]
 |------|-------------|
 | `--include-namespaces` | Namespaces to include in the backup. Default: `*` (all namespaces). |
 | `--exclude-namespaces` | Namespaces to exclude from the backup. |
-| `--include-resources` | Resources to include in the backup. Default: `*` (all resources). |
-| `--exclude-resources` | Resources to exclude from the backup. |
+| `--include-resources` | Resources to include in the backup. Accepts simple kind names (e.g., `deployments,services`) or `resource.group` format (e.g., `deployments.apps`) for disambiguation. Default: `*` (all resources). |
+| `--exclude-resources` | Resources to exclude from the backup. Same format as `--include-resources`. |
 | `--storage-location` | Name of the backup storage location to use. |
 | `--volume-snapshot-locations` | Volume snapshot location(s) to use. |
 | `--selector` / `-l` | Label selector to filter resources. |
@@ -264,8 +264,8 @@ $ oc oadp restore create <restore_name> [flags]
 | `--from-schedule` | Name of the schedule to restore from (uses the most recent backup). |
 | `--include-namespaces` | Namespaces to include in the restore. Default: `*` (all namespaces). |
 | `--exclude-namespaces` | Namespaces to exclude from the restore. |
-| `--include-resources` | Resources to include in the restore. Default: `*` (all resources). |
-| `--exclude-resources` | Resources to exclude from the restore. |
+| `--include-resources` | Resources to include in the restore. Accepts simple kind names (e.g., `deployments,services`) or `resource.group` format (e.g., `deployments.apps`) for disambiguation. Default: `*` (all resources). |
+| `--exclude-resources` | Resources to exclude from the restore. Same format as `--include-resources`. |
 | `--selector` / `-l` | Label selector to filter resources. |
 | `--or-selector` | OR combination of label selectors. |
 | `--include-cluster-resources` | Include cluster-scoped resources. |
@@ -348,8 +348,8 @@ $ oc oadp schedule create <schedule_name> [flags]
 | `--schedule` | Cron expression for the schedule (e.g., `0 1 * * *` for daily at 1 AM). |
 | `--include-namespaces` | Namespaces to include in scheduled backups. Default: `*` (all namespaces). |
 | `--exclude-namespaces` | Namespaces to exclude from scheduled backups. |
-| `--include-resources` | Resources to include in scheduled backups. Default: `*` (all resources). |
-| `--exclude-resources` | Resources to exclude from scheduled backups. |
+| `--include-resources` | Resources to include in scheduled backups. Accepts simple kind names (e.g., `deployments,services`) or `resource.group` format (e.g., `deployments.apps`) for disambiguation. Default: `*` (all resources). |
+| `--exclude-resources` | Resources to exclude from scheduled backups. Same format as `--include-resources`. |
 | `--storage-location` | Name of the backup storage location to use. |
 | `--volume-snapshot-locations` | Volume snapshot location(s) to use. |
 | `--selector` / `-l` | Label selector to filter resources. |
@@ -709,8 +709,8 @@ $ oc oadp nonadmin backup create <backup_name> [flags]
 | Flag | Description |
 |------|-------------|
 | `--storage-location` | Name of the NonAdminBackupStorageLocation to use. Required unless a default is configured. |
-| `--include-resources` | Resources to include in the backup, formatted as `resource.group`. Default: `*` (all resources). |
-| `--exclude-resources` | Resources to exclude from the backup, formatted as `resource.group`. |
+| `--include-resources` | Resources to include in the backup. Accepts simple kind names (e.g., `deployments,services`) or `resource.group` format (e.g., `deployments.apps`) for disambiguation. Default: `*` (all resources). |
+| `--exclude-resources` | Resources to exclude from the backup. Same format as `--include-resources`. |
 | `--selector` / `-l` | Only back up resources matching this label selector. |
 | `--or-selector` | Back up resources matching at least one of the label selectors, separated by ` or `. |
 | `--ttl` | How long before the backup can be garbage collected. Default: `720h`. |
@@ -817,8 +817,8 @@ The restore name is optional. If not provided, a name is automatically generated
 | Flag | Description |
 |------|-------------|
 | `--backup-name` | Name of the non-admin backup to restore from. Required. |
-| `--include-resources` | Resources to include in the restore, formatted as `resource.group`. Default: `*` (all resources). |
-| `--exclude-resources` | Resources to exclude from the restore, formatted as `resource.group`. |
+| `--include-resources` | Resources to include in the restore. Accepts simple kind names (e.g., `deployments,services`) or `resource.group` format (e.g., `deployments.apps`) for disambiguation. Default: `*` (all resources). |
+| `--exclude-resources` | Resources to exclude from the restore. Same format as `--include-resources`. |
 | `--selector` / `-l` | Only restore resources matching this label selector. |
 | `--or-selector` | Restore resources matching at least one of the label selectors, separated by ` or `. |
 | `--include-cluster-resources` | Include cluster-scoped resources in the restore. |
@@ -918,7 +918,7 @@ $ oc oadp nonadmin bsl create <bsl_name> [flags]
 |------|-------------|
 | `--provider` | Storage provider (required). Examples: `aws`, `azure`, `gcp`. |
 | `--bucket` | Object storage bucket name (required). |
-| `--credential` | Credential for this location as `SECRET_NAME=KEY` (required). The key is the Kubernetes Secret name, and the value is the data key within the Secret. |
+| `--credential` | Credential for this location as `SECRET_NAME=KEY` (required). The `SECRET_NAME` is the Kubernetes Secret name, and the `KEY` is the data key within the Secret. |
 | `--prefix` | Prefix for backup objects in the bucket. |
 | `--region` | Storage region (required for some providers like AWS). |
 | `--config` | Additional provider-specific configuration as key=value pairs. |
