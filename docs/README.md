@@ -139,20 +139,20 @@ $ oc oadp completion bash > /etc/bash_completion.d/oc-oadp
 
 ---
 
-# 5. Administrator perspective
+## 5. Administrator perspective
 
 The administrator perspective provides cluster-wide backup and restore operations using Velero resources. These commands are available when the OADP CLI is configured in admin mode.
 
-## 5.1 Managing backups
+### 5.1 Managing backups
 
 You can use the OADP CLI to create, view, describe, download, and delete backups.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 
-### Creating a backup
+#### Creating a backup
 
 You create a backup of cluster resources by running the following command:
 
@@ -188,7 +188,7 @@ $ oc oadp backup create my-backup \
     --ttl 720h
 ```
 
-### Listing backups
+#### Listing backups
 
 You list all backups by running the following command:
 
@@ -200,7 +200,7 @@ $ oc oadp backup get [<backup_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Describing a backup
+#### Describing a backup
 
 You describe a backup to view its details by running the following command:
 
@@ -212,7 +212,7 @@ $ oc oadp backup describe <backup_name> [flags]
 |------|-------------|
 | `--details` | Display additional detail in the output. |
 
-### Viewing backup logs
+#### Viewing backup logs
 
 You view the logs for a backup by running the following command:
 
@@ -220,7 +220,7 @@ You view the logs for a backup by running the following command:
 $ oc oadp backup logs <backup_name>
 ```
 
-### Downloading a backup
+#### Downloading a backup
 
 You download the contents of a backup by running the following command:
 
@@ -228,7 +228,7 @@ You download the contents of a backup by running the following command:
 $ oc oadp backup download <backup_name> [flags]
 ```
 
-### Deleting a backup
+#### Deleting a backup
 
 You delete a backup by running the following command:
 
@@ -240,17 +240,17 @@ $ oc oadp backup delete <backup_name> [flags]
 |------|-------------|
 | `--confirm` | Confirm deletion without prompting. |
 
-## 5.2 Managing restores
+### 5.2 Managing restores
 
 You can use the OADP CLI to create, view, describe, and delete restores.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 - A completed backup exists to restore from.
 
-### Creating a restore
+#### Creating a restore
 
 You create a restore from an existing backup by running the following command:
 
@@ -282,7 +282,7 @@ $ oc oadp restore create my-restore \
     --include-namespaces my-namespace
 ```
 
-### Listing restores
+#### Listing restores
 
 You list all restores by running the following command:
 
@@ -294,7 +294,7 @@ $ oc oadp restore get [<restore_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Describing a restore
+#### Describing a restore
 
 You describe a restore to view its details by running the following command:
 
@@ -306,7 +306,7 @@ $ oc oadp restore describe <restore_name> [flags]
 |------|-------------|
 | `--details` | Display additional detail in the output. |
 
-### Viewing restore logs
+#### Viewing restore logs
 
 You view the logs for a restore by running the following command:
 
@@ -314,7 +314,7 @@ You view the logs for a restore by running the following command:
 $ oc oadp restore logs <restore_name>
 ```
 
-### Deleting a restore
+#### Deleting a restore
 
 You delete a restore by running the following command:
 
@@ -326,16 +326,16 @@ $ oc oadp restore delete <restore_name> [flags]
 |------|-------------|
 | `--confirm` | Confirm deletion without prompting. |
 
-## 5.3 Managing schedules
+### 5.3 Managing schedules
 
 You can use the OADP CLI to create, view, describe, and delete backup schedules. Schedules automate the creation of backups at specified intervals using a cron expression.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 
-### Creating a schedule
+#### Creating a schedule
 
 You create a backup schedule by running the following command:
 
@@ -369,7 +369,7 @@ $ oc oadp schedule create daily-backup \
     --ttl 720h
 ```
 
-### Listing schedules
+#### Listing schedules
 
 You list all schedules by running the following command:
 
@@ -381,7 +381,7 @@ $ oc oadp schedule get [<schedule_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Describing a schedule
+#### Describing a schedule
 
 You describe a schedule to view its details by running the following command:
 
@@ -389,7 +389,7 @@ You describe a schedule to view its details by running the following command:
 $ oc oadp schedule describe <schedule_name> [flags]
 ```
 
-### Deleting a schedule
+#### Deleting a schedule
 
 You delete a schedule by running the following command:
 
@@ -401,16 +401,16 @@ $ oc oadp schedule delete <schedule_name> [flags]
 |------|-------------|
 | `--confirm` | Confirm deletion without prompting. |
 
-## 5.4 Managing backup storage locations
+### 5.4 Managing backup storage locations
 
 You can use the OADP CLI to create, view, set, and delete backup storage locations (BSLs). Backup storage locations define where backup data is stored, such as an object storage bucket.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 
-### Creating a backup storage location
+#### Creating a backup storage location
 
 You create a backup storage location by running the following command:
 
@@ -438,7 +438,7 @@ $ oc oadp backup-location create my-bsl \
     --credential cloud-credentials=cloud
 ```
 
-### Listing backup storage locations
+#### Listing backup storage locations
 
 You list all backup storage locations by running the following command:
 
@@ -450,7 +450,7 @@ $ oc oadp backup-location get [<bsl_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Setting a default backup storage location
+#### Setting a default backup storage location
 
 You set the default backup storage location by running the following command:
 
@@ -458,7 +458,7 @@ You set the default backup storage location by running the following command:
 $ oc oadp backup-location set <bsl_name> [flags]
 ```
 
-### Deleting a backup storage location
+#### Deleting a backup storage location
 
 You delete a backup storage location by running the following command:
 
@@ -470,16 +470,16 @@ $ oc oadp backup-location delete <bsl_name> [flags]
 |------|-------------|
 | `--confirm` | Confirm deletion without prompting. |
 
-## 5.5 Managing snapshot locations
+### 5.5 Managing snapshot locations
 
 You can use the OADP CLI to create, view, set, and delete volume snapshot locations (VSLs). Volume snapshot locations define where PersistentVolume snapshots are stored.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 
-### Creating a snapshot location
+#### Creating a snapshot location
 
 You create a volume snapshot location by running the following command:
 
@@ -501,7 +501,7 @@ $ oc oadp snapshot-location create my-vsl \
     --config region=us-east-1
 ```
 
-### Listing snapshot locations
+#### Listing snapshot locations
 
 You list all volume snapshot locations by running the following command:
 
@@ -513,7 +513,7 @@ $ oc oadp snapshot-location get [<vsl_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Setting a default snapshot location
+#### Setting a default snapshot location
 
 You set the default volume snapshot location by running the following command:
 
@@ -521,7 +521,7 @@ You set the default volume snapshot location by running the following command:
 $ oc oadp snapshot-location set <vsl_name> [flags]
 ```
 
-### Deleting a snapshot location
+#### Deleting a snapshot location
 
 You delete a volume snapshot location by running the following command:
 
@@ -533,17 +533,17 @@ $ oc oadp snapshot-location delete <vsl_name> [flags]
 |------|-------------|
 | `--confirm` | Confirm deletion without prompting. |
 
-## 5.6 Managing NABSL approval requests
+### 5.6 Managing NABSL approval requests
 
 When the OADP Operator is configured with `nonAdmin.requireApprovalForBSL: true`, non-admin users who create a NonAdminBackupStorageLocation (NABSL) trigger an approval request in the OADP namespace. You can use the OADP CLI to view, describe, approve, and reject these requests.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 - The DPA is configured with `nonAdmin.enable: true` and `nonAdmin.requireApprovalForBSL: true`.
 
-### Listing NABSL approval requests
+#### Listing NABSL approval requests
 
 You list all pending approval requests by running the following command:
 
@@ -563,7 +563,7 @@ Example:
 $ oc oadp nabsl-request get
 ```
 
-### Describing an NABSL approval request
+#### Describing an NABSL approval request
 
 You describe an approval request to view its full details, including the requested backup storage location spec, by running the following command:
 
@@ -579,7 +579,7 @@ Example:
 $ oc oadp nabsl-request describe my-bsl-request
 ```
 
-### Approving an NABSL approval request
+#### Approving an NABSL approval request
 
 You approve a pending request to allow the controller to create the corresponding BackupStorageLocation by running the following command:
 
@@ -599,7 +599,7 @@ Example:
 $ oc oadp nabsl-request approve user-test-bsl --reason "Approved for production use"
 ```
 
-### Rejecting an NABSL approval request
+#### Rejecting an NABSL approval request
 
 You reject a pending request to deny the user's request for a backup storage location by running the following command:
 
@@ -619,17 +619,17 @@ Example:
 $ oc oadp nabsl-request reject user-test-bsl --reason "Invalid configuration"
 ```
 
-## 5.7 Collecting diagnostic data
+### 5.7 Collecting diagnostic data
 
 You can use the OADP CLI to collect diagnostic information for OADP installations. The `must-gather` command runs the OADP must-gather tool to collect logs and cluster state information needed for troubleshooting and support cases.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in admin mode.
 - You are logged in to the OpenShift cluster as a user with `cluster-admin` privileges.
 - The `oc` CLI is installed and available on your `PATH`.
 
-### Collecting diagnostic data
+#### Collecting diagnostic data
 
 You collect OADP diagnostic information by running the following command:
 
@@ -653,19 +653,19 @@ $ oc oadp must-gather --dest-dir=/tmp/oadp-diagnostics --request-timeout=1m
 
 ---
 
-# 6. Non-administrator perspective
+## 6. Non-administrator perspective
 
-## 6.1 About OADP self-service
+### 6.1 About OADP self-service
 
 OADP self-service enables non-administrator users to perform backup and restore operations in their authorized namespaces without requiring cluster-wide administrator privileges. This feature provides secure self-service data protection capabilities while maintaining proper administrator controls over backup and restore operations.
 
-### Key capabilities
+#### Key capabilities
 
 - Create and manage namespace-scoped backups and restores.
 - View backup and restore status and logs.
 - Create dedicated backup storage locations with user-owned buckets and credentials.
 
-### Limitations
+#### Limitations
 
 - Cross-cluster operations and migrations are not supported for non-admin users.
 - Non-admin volume snapshot locations (VSLs) are not supported. The VSL created by the cluster administrator in the DPA is used.
@@ -674,7 +674,7 @@ OADP self-service enables non-administrator users to perform backup and restore 
 - ResourceModifiers and volume policies are not supported for non-admin backup and restore operations.
 - Backup and restore logs via NonAdminDownloadRequest are not supported for default BSLs. NonAdminBackupStorageLocations must be created to access logs.
 
-### Prerequisites
+#### Prerequisites
 
 Before using OADP self-service, the cluster administrator must have completed the following:
 
@@ -687,18 +687,18 @@ Before using OADP self-service, the cluster administrator must have completed th
   - `nonadmindownloadrequests.oadp.openshift.io`
 - Optionally created a NonAdminBackupStorageLocation for your namespace.
 
-## 6.2 Managing backups
+### 6.2 Managing backups
 
 You can use the OADP CLI to create, view, describe, and delete non-admin backups in your namespace.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in non-admin mode.
 - You are logged in to the OpenShift cluster and your current namespace context is set to the namespace you want to back up.
 - You have editor roles for `nonadminbackups.oadp.openshift.io` in your namespace.
 - A NonAdminBackupStorageLocation exists in your namespace, or a default has been configured with `oc oadp client config set default-nabsl=<name>`.
 
-### Creating a backup
+#### Creating a backup
 
 You create a backup of resources in your current namespace by running the following command:
 
@@ -733,7 +733,7 @@ $ oc oadp nonadmin backup create my-backup \
 
 > **Tip:** To avoid specifying the storage location each time, run `oc oadp client config set default-nabsl=<NABSL_NAME>` to set a default.
 
-### Listing backups
+#### Listing backups
 
 You list all backups in your current namespace by running the following command:
 
@@ -745,7 +745,7 @@ $ oc oadp nonadmin backup get [<backup_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Describing a backup
+#### Describing a backup
 
 You describe a backup to view its details by running the following command:
 
@@ -758,7 +758,7 @@ $ oc oadp nonadmin backup describe <backup_name> [flags]
 | `--details` | Display additional backup details including volume snapshots, resource lists, and item operations. |
 | `--request-timeout` | Timeout for fetching backup details from the server. |
 
-### Viewing backup logs
+#### Viewing backup logs
 
 You view the logs for a backup by running the following command:
 
@@ -772,7 +772,7 @@ $ oc oadp nonadmin backup logs <backup_name> [flags]
 
 > **Note:** Backup logs are only available when using a NonAdminBackupStorageLocation. Logs are not available for backups that use the default cluster BSL. Using the default cluster BSL is not recommended.
 
-### Deleting backups
+#### Deleting backups
 
 You delete one or more backups by running the following command:
 
@@ -793,18 +793,18 @@ Example:
 $ oc oadp nonadmin backup delete my-backup --confirm
 ```
 
-## 6.3 Managing restores
+### 6.3 Managing restores
 
 You can use the OADP CLI to create, view, describe, and delete non-admin restores in your namespace.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in non-admin mode.
 - You are logged in to the OpenShift cluster and your current namespace context is set to the namespace you want to restore to.
 - You have editor roles for `nonadminrestores.oadp.openshift.io` in your namespace.
 - A completed non-admin backup exists to restore from.
 
-### Creating a restore
+#### Creating a restore
 
 You create a restore from an existing non-admin backup by running the following command:
 
@@ -832,7 +832,7 @@ $ oc oadp nonadmin restore create my-restore \
     --selector app=myapp
 ```
 
-### Listing restores
+#### Listing restores
 
 You list all restores in your current namespace by running the following command:
 
@@ -844,7 +844,7 @@ $ oc oadp nonadmin restore get [<restore_name>] [flags]
 |------|-------------|
 | `-o` | Output format. Supported values: `json`, `yaml`. |
 
-### Describing a restore
+#### Describing a restore
 
 You describe a restore to view its details by running the following command:
 
@@ -857,7 +857,7 @@ $ oc oadp nonadmin restore describe <restore_name> [flags]
 | `--details` | Display additional restore details. |
 | `--request-timeout` | Timeout for fetching restore details from the server. |
 
-### Viewing restore logs
+#### Viewing restore logs
 
 You view the logs for a restore by running the following command:
 
@@ -871,7 +871,7 @@ $ oc oadp nonadmin restore logs <restore_name> [flags]
 
 > **Note:** Restore logs are only available when using a NonAdminBackupStorageLocation. Logs are not available for restores associated with backups that use the default cluster BSL. Using the default cluster BSL is not recommended.
 
-### Deleting restores
+#### Deleting restores
 
 You delete one or more restores by running the following command:
 
@@ -892,20 +892,20 @@ Example:
 $ oc oadp nonadmin restore delete my-restore --confirm
 ```
 
-## 6.4 Managing backup storage locations (NonAdminBackupStorageLocations - NABSLs)
+### 6.4 Managing backup storage locations (NonAdminBackupStorageLocations - NABSLs)
 
 You can use the OADP CLI to create and view NonAdminBackupStorageLocations (NABSLs) in your namespace. NABSLs define where your backup data is stored using object storage that you own.
 
 > **Note:** Updating or deleting NABSLs after creation is not supported for non-admin users.
 
-### Prerequisites
+#### Prerequisites
 
 - The OADP CLI is installed and configured in non-admin mode.
 - You are logged in to the OpenShift cluster and your current namespace context is set to the target namespace.
 - You have editor roles for `nonadminbackupstoragelocations.oadp.openshift.io` in your namespace.
 - You have a Kubernetes Secret in your namespace containing the credentials for your object storage provider.
 
-### Creating a backup storage location
+#### Creating a backup storage location
 
 You create a backup storage location by running the following command:
 
@@ -937,7 +937,7 @@ $ oc oadp nonadmin bsl create my-storage \
 
 > **Tip:** After creating a BSL, run `oc oadp client config set default-nabsl=<BSL_NAME>` to set it as the default and avoid specifying the storage location on each backup.
 
-### Listing backup storage locations
+#### Listing backup storage locations
 
 You list all backup storage locations in your current namespace by running the following command:
 
