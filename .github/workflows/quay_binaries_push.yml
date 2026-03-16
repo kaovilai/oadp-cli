@@ -6,6 +6,8 @@ on:
     branches:
       - 'oadp-*'
   pull_request:
+    branches:
+      - 'oadp-*'
 
 
 env:
@@ -58,7 +60,7 @@ jobs:
     name: Create and Push Multi-Arch Manifest
     runs-on: ubuntu-latest
     needs: multi-arch-build
-    if: startsWith(github.ref_name, 'oadp-')
+    if: github.event_name == 'push'
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -83,6 +85,7 @@ jobs:
           buildah tag $S390X_ID ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-s390x
 
       - name: Create and push multi-arch manifest (version tag)
+        if: github.ref_name != 'oadp-dev'
         run: |
           buildah manifest create ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
           buildah manifest add ${{ env.IMAGE_REPO }}:${{ github.ref_name }} ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-amd64
@@ -92,6 +95,7 @@ jobs:
           buildah manifest push --all ${{ env.IMAGE_REPO }}:${{ github.ref_name }}
 
       - name: Create and push multi-arch manifest (latest tag)
+        if: github.ref_name == 'oadp-dev'
         run: |
           buildah manifest create ${{ env.IMAGE_REPO }}:latest
           buildah manifest add ${{ env.IMAGE_REPO }}:latest ${{ env.IMAGE_REPO }}:${{ github.ref_name }}-amd64
