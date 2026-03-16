@@ -893,7 +893,7 @@ Example:
 $ oc oadp nonadmin restore delete my-restore --confirm
 ```
 
-## 6.4 Managing backup storage locations
+## 6.4 Managing backup storage locations (NonAdminBackupStorageLocations - NABSLs)
 
 You can use the OADP CLI to create and view NonAdminBackupStorageLocations (NABSLs) in your namespace. NABSLs define where your backup data is stored using object storage that you own.
 
