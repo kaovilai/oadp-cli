@@ -1,10 +1,10 @@
-# Push binaries to Quay.io, when a new release is created
+# Push binaries to Quay.io on pushes to oadp-* branches
 name: Multi-Arch Binary Push to Quay.io
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - 'oadp-*'
   pull_request:
 
 
@@ -58,7 +58,7 @@ jobs:
     name: Create and Push Multi-Arch Manifest
     runs-on: ubuntu-latest
     needs: multi-arch-build
-    if: startsWith(github.ref_name, 'v')
+    if: startsWith(github.ref_name, 'oadp-')
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
