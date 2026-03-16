@@ -821,7 +821,6 @@ The restore name is optional. If not provided, a name is automatically generated
 | `--exclude-resources` | Resources to exclude from the restore. Same format as `--include-resources`. |
 | `--selector` / `-l` | Only restore resources matching this label selector. |
 | `--or-selector` | Restore resources matching at least one of the label selectors, separated by ` or `. |
-| `--include-cluster-resources` | Include cluster-scoped resources in the restore. |
 | `--item-operation-timeout` | Timeout for asynchronous plugin operations. |
 
 Example:
