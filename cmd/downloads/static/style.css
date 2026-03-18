@@ -89,7 +89,12 @@ body {
 }
 
 .section-header .os-icon {
-  font-size: 1.1rem;
+  font-size: 1.4rem;
+}
+
+.section-header .os-logo {
+  height: 1.6rem;
+  width: auto;
 }
 
 table {
